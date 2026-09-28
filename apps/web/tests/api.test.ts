@@ -87,6 +87,13 @@ describe("le compte", () => {
     await expect(depotApi().connecter("g@x.fr", "mauvais")).rejects.toThrow("Réessayez dans 10 min.");
     repondre = () => { throw new TypeError("Failed to fetch"); };
     await expect(depotApi().connecter("g@x.fr", "x")).rejects.toThrow("Serveur injoignable");
+    /* L'API arrêtée derrière nginx : 502 ou 504, une page HTML. Le
+       message disait « Refusé par le serveur (504) » (relecture de la
+       recette, W8). */
+    for (const statut of [502, 504]) {
+      repondre = () => new Response("<html>Bad Gateway</html>", { status: statut, headers: { "content-type": "text/html" } });
+      await expect(depotApi().connecter("g@x.fr", "x")).rejects.toThrow("Serveur en difficulté : réessayez dans un instant.");
+    }
   });
 });
 

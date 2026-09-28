@@ -311,6 +311,9 @@ export function depotApi(): Depot {
       catch { throw new Error("Serveur injoignable : vérifiez le réseau."); }
       if (r.statut === 204) { const c = compteDe(email); retenir(c); return c; }
       if (r.statut === 401) throw new Error("Adresse ou mot de passe incorrect.");
+      /* L'API arrêtée ou qui redémarre : nginx répond 502 ou 504, et
+         « Refusé par le serveur (504) » laissait croire à un refus. */
+      if (r.statut >= 500) throw new Error("Serveur en difficulté : réessayez dans un instant.");
       if (r.statut === 429) {
         const s = Number((r.corps as { reessayerDans?: number } | null)?.reessayerDans) || 900;
         throw new Error(`Trop de tentatives. Réessayez dans ${Math.ceil(s / 60)} min.`);
