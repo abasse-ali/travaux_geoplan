@@ -4,7 +4,7 @@ Recette de W8. Chaque ligne est un comportement observable aujourd'hui (commit `
 La reconstruction doit le conserver, ou l'améliorer de façon annoncée.
 
 - **Réf.** : identifiant stable, cité par les tests et par le journal.
-- **Test** : `e2e` = couvert par Playwright (`e2e/`), `unit` = par Vitest, `manuel` = à jouer à la main en W8.
+- **Test** : `e2e` = couvert par Playwright (`e2e/`), `unit` = par Vitest, `recette` = joué par la recette de W8 sur la pile Docker locale (`apps/web/recette/`, verdicts dans [`RECETTE.md`](RECETTE.md)), `manuel` = à jouer à la main, sur l'iPhone.
 - ⚠ signale un comportement actuel **défectueux**, consigné dans le journal. La recette vérifie qu'il est corrigé ou, à défaut, qu'il n'a pas empiré.
 
 Les libellés entre guillemets sont les textes exacts de l'interface : ils servent de sélecteurs.
@@ -36,7 +36,7 @@ Les libellés entre guillemets sont les textes exacts de l'interface : ils serve
 | B7 | Toucher une puce du vivier | Ouvre la fiche du compagnon sans la section « Jours sur… ». | e2e |
 | B8 | Fiche compagnon → « Poser sur · {jour} » → un chantier | Pose le compagnon sur ce chantier ce jour-là et ferme. Le chantier où il est déjà est marqué « ici » et désactivé. | e2e |
 | B9 | Fiche compagnon → « Retirer de ce jour » | Le retire de tous les chantiers ce jour-là. | e2e |
-| B10 | Fiche compagnon → « Appeler », « SMS », « WhatsApp », ou « Écrire » sans téléphone | Ouvre le lien `tel:`, `sms:`, `wa.me` ou `mailto:` correspondant. « Aucun contact enregistré… » sans coordonnées. | manuel |
+| B10 | Fiche compagnon → « Appeler », « SMS », « WhatsApp », ou « Écrire » sans téléphone | Ouvre le lien `tel:`, `sms:`, `wa.me` ou `mailto:` correspondant. « Aucun contact enregistré… » sans coordonnées. | recette (les liens) + manuel (ouvrir Téléphone, Messages, WhatsApp) |
 | B11 | « Reprendre l'équipe de la veille » (zone vide, équipe la veille) | Repose ceux d'hier qui sont disponibles et libres aujourd'hui. Toast « {N} compagnon(s) reconduit(s) sur **CODE** » ou « Aucun n'est disponible et libre ce jour-là ». | e2e |
 | B12 | Interrupteur « Urgence » (vivier déplié) | Toast « **Mode urgence** — un compagnon peut être posé sur deux chantiers le même jour ». Glisser de A vers B **copie** la puce au lieu de la déplacer ; la zone survolée passe en fuchsia. L'état est retenu d'un lancement à l'autre. Le désactiver ne retire pas les doublons existants. | e2e |
 | B13 | Hors urgence, toute écriture (glisser, fiche, Composer, Répartir, « Ses jours dispo ») | Un compagnon n'est jamais sur deux chantiers le même jour : il est retiré des autres. | e2e + unit |
@@ -90,20 +90,20 @@ Les libellés entre guillemets sont les textes exacts de l'interface : ils serve
 | G2 | « Ajouter au vivier » / « Enregistrer » | Contrôles dans l'ordre : « Il manque le nom », « Il faut au moins un jour de présence », « Ce numéro n'a pas l'air valide », « Cette adresse e-mail n'est pas valide ». Téléphone normalisé en +33. Toast « **nom** ajouté au vivier » ou « enregistré ». | e2e + unit |
 | G3 | Toucher une ligne de l'onglet Équipe | Ouvre directement la fiche d'édition. La ligne montre les chantiers de la semaine ou « Libre », les jours, « a répondu » / « relancé » / « pas d'e-mail », « permis », les niveaux. | e2e |
 | G4 | « Supprimer {nom} » → « Confirmer la suppression » | Le retire de l'effectif et de tous les plans. Toast « {nom} supprimé ». | e2e |
-| G5 | « Demander les dispos · semaine N » | Feuille « Demander les dispos ». Connecté : une ligne par compagnon avec e-mail, « SMS » et « Lien » (toast « Lien copié »). Hors connexion : message qui demande de se connecter. À partir du vendredi, la semaine visée est la suivante. Ouvrir la feuille ne crée rien : le lien d'un compagnon est créé quand on touche « SMS » ou « Lien », et lui seul passe « en attente » (corrigé en W4, constat U11). | e2e (trois sources) + manuel (copie du lien sur iPhone) |
-| G6 | Réponse d'un compagnon reçue en direct | Toast « **nom** a répondu pour la semaine N », et ses jours de la semaine se mettent à jour. | manuel |
+| G5 | « Demander les dispos · semaine N » | Feuille « Demander les dispos ». Connecté : une ligne par compagnon avec e-mail, « SMS » et « Lien » (toast « Lien copié »). Hors connexion : message qui demande de se connecter. À partir du vendredi, la semaine visée est la suivante. Ouvrir la feuille ne crée rien : le lien d'un compagnon est créé quand on touche « SMS » ou « Lien », et lui seul passe « en attente » (corrigé en W4, constat U11). | e2e (trois sources) + recette + manuel (copie du lien sur iPhone) |
+| G6 | Réponse d'un compagnon reçue en direct | Toast « **nom** a répondu pour la semaine N », et ses jours de la semaine se mettent à jour. | recette |
 
 ## H. Données, synchronisation, sauvegarde
 
 | Réf. | Geste | Résultat attendu | Test |
 |---|---|---|---|
-| H1 | Bouton d'état en haut à droite | Dit toujours où en sont les données : « À jour », « N en attente », « Local », « … » pendant un envoi, et tant qu'aucune lecture du serveur n'a réussi depuis le lancement ; « Hors ligne » quand cette lecture a échoué et que rien n'attend (il disait « 0 en attente » : U29, corrigé en W8). Hors ligne, les écritures repartent seules au retour du réseau, et toutes les 6 s. | e2e (trois sources) + manuel (mode avion) |
+| H1 | Bouton d'état en haut à droite | Dit toujours où en sont les données : « À jour », « N en attente », « Local », « … » pendant un envoi, et tant qu'aucune lecture du serveur n'a réussi depuis le lancement ; « Hors ligne » quand cette lecture a échoué et que rien n'attend (il disait « 0 en attente » : U29, corrigé en W8). Hors ligne, les écritures repartent seules au retour du réseau, et toutes les 6 s. | e2e (trois sources) + recette + manuel (mode avion) |
 | H2 | Bouton d'état → feuille « Données » | « Stockage local » / « Synchronisé » ; le compte, et où sont les données ; « N compagnons · M chantiers » ; « N modifications en attente d'envoi » avec « Réessayer l'envoi » ; un avertissement si le stockage du navigateur est plein ; « Se déconnecter ». | e2e (trois sources) |
 | H3 | « Exporter un fichier de sauvegarde » (Équipe ou Données) | Télécharge `geoplan-AAAA-MM-JJ.json` (`{app, v:3, exportedAt, people, sites}`). Toast « Sauvegarde téléchargée ». | e2e |
 | H4 | Restaurer : choisir un fichier, ou coller le JSON, puis « Remplacer les données » | Un premier toucher annonce ce qui va être remplacé ; « Confirmer : tout sera remplacé » remplace (corrigé en W4, constat U7). Toast « N compagnons et M chantiers restaurés », ou tout de suite « Sauvegarde illisible — vérifiez le fichier ». `data/effectif.json` s'importe. En mode connecté, les fiches absentes du fichier sont supprimées sur le serveur. | e2e (trois sources) |
-| H5 | Lancer l'application | L'écran s'affiche depuis le cache, sans attendre le réseau, même hors ligne avec une session expirée (corrigé en W4, constat S10). Les écritures en attente d'une session précédente repartent, y compris celles de la version d'avant W4. | e2e (trois sources) + manuel |
+| H5 | Lancer l'application | L'écran s'affiche depuis le cache, sans attendre le réseau, même hors ligne avec une session expirée (corrigé en W4, constat S10). Les écritures en attente d'une session précédente repartent, y compris celles de la version d'avant W4. | e2e (trois sources) + recette + manuel (mode avion) |
 | H6 | Sans base configurée | Bandeau « **Mode local** — les données restent sur cet appareil… ». Pas d'écran de connexion. | e2e |
-| H7 | Deux appareils connectés | Une modification sur l'un apparaît sur l'autre sans recharger. | manuel |
+| H7 | Deux appareils connectés | Une modification sur l'un apparaît sur l'autre sans recharger. | recette |
 
 ## I. Connexion
 
@@ -111,9 +111,9 @@ Les libellés entre guillemets sont les textes exacts de l'interface : ils serve
 |---|---|---|---|
 | I1 | Premier lancement connecté | Écran « Geoplan » : e-mail (« vous@exemple.fr »), « Mot de passe », « Se connecter ». Bouton inactif tant que l'e-mail fait 3 caractères ou moins ou le mot de passe moins de 6. Champs nommés pour le trousseau iOS. | e2e |
 | I2 | Erreur de connexion | « Adresse ou mot de passe incorrect. Si vous n'avez pas encore de compte, créez-le. » | e2e |
-| I3 | Lancements suivants | Aucune reconnexion : la session est conservée sur l'appareil et rafraîchie seule, y compris dans la PWA posée sur l'écran d'accueil. **Aucun flux ne dépend d'un lien ou d'un code reçu par e-mail.** | manuel |
-| I4 | « Créer un compte », « Mot de passe oublié », « Revenir à la connexion » | Changent de mode. ⚠ Le lien de réinitialisation ouvre une session sans faire choisir de nouveau mot de passe. | manuel |
-| I5 | « Se déconnecter » (feuille Données) | Retour à l'écran de connexion. | manuel |
+| I3 | Lancements suivants | Aucune reconnexion : la session est conservée sur l'appareil et rafraîchie seule, y compris dans la PWA posée sur l'écran d'accueil. **Aucun flux ne dépend d'un lien ou d'un code reçu par e-mail.** | recette + manuel (l'application posée sur l'écran d'accueil) |
+| I4 | « Créer un compte », « Mot de passe oublié », « Revenir à la connexion » | Source supabase (la production jusqu'à la bascule) : changent de mode. ⚠ Le lien de réinitialisation ouvre une session sans faire choisir de nouveau mot de passe (U9). Source api : ces boutons n'existent pas ; l'écran dit « Pas encore de compte, ou mot de passe perdu ? Le responsable du serveur le crée ou le change pour vous. » (U9 réglé, W3 et W4). | e2e (les deux sources) + recette (api) |
+| I5 | « Se déconnecter » (feuille Données) | Retour à l'écran de connexion. | recette |
 
 ## J. La page du compagnon (`dispo.html`)
 
@@ -138,10 +138,10 @@ Parcours complet, sans compte, depuis le lien reçu chaque samedi.
 | Réf. | Comportement | Attendu | Test |
 |---|---|---|---|
 | K1 | Mobile portrait, pouce | Tout geste se fait d'une main sur un iPhone ; le desktop fonctionne. | e2e (viewport iPhone) |
-| K2 | Mode sombre | Suit `prefers-color-scheme`. | manuel (captures W5) |
+| K2 | Mode sombre | Suit `prefers-color-scheme`. | recette (captures Chromium) + manuel (captures WebKit) |
 | K3 | `prefers-reduced-motion` | Coupe les animations décoratives : les animations CSS, la feuille du bas, et ce que joue le script (Web Animations : le vivier qui change de forme, le trait sous l'onglet, un volet qui se déplie). L'état final paraît d'un coup. Un tour de chaque geste qui bougeait le vérifie : plus rien ne bouge, ni animation, ni transition, ni délai (W6). (U10, corrigé en W5 ; Framer Motion retiré en W6.) | e2e |
 | K4 | Feuilles du bas | Se ferment par le fond, par Échap, par « Fermer », ou glissées vers le bas (un petit glisser les laisse revenir). Au clavier, le focus reste dans la feuille, puis revient d'où il venait. Le sous-titre est annoncé. Pendant 260 ms après l'ouverture, elles ignorent le doigt. Si leur code ne se charge pas, la fiche ne s'ouvre pas et un message demande de recharger ; le planning reste. | e2e |
 | K5 | Toasts | Deux au plus, 2,8 s chacun, centrés en bas de l'écran (U15, corrigé en W1). Ils ne prennent pas le doigt : ce qu'ils couvrent reste à portée, une puce lâchée sur le vivier sous un toast y retourne (U22, corrigé en W6). Ils entrent en montant et s'éteignent avant de partir. | e2e |
 | K6 | Une entrée ne se rejoue pas | Une animation d'entrée (le libellé de la semaine, « Auj. », le fondu d'un onglet, une puce, une fiche) ne se joue qu'à l'arrivée de ce qu'elle présente, jamais quand l'application se redessine ; au premier affichage non plus, même quand la coque a d'abord attendu ses données (V5 et V6, corrigés en W6). | e2e |
 | K7 | « Sons des gestes » (feuille « Données », sur cet appareil) | Éteint par défaut. Allumé : une note brève qui monte quand on pose un compagnon (glisser, ou un jour de sa fiche), une qui descend quand on le retire ; l'allumer la fait entendre une fois. Retenu d'un lancement à l'autre. Se tait avec le bouton de silence de l'iPhone, et se mêle à la musique au lieu de la couper (W6). | e2e |
-| K8 | La relance du samedi | Chaque samedi à 9 h (Paris), un e-mail nominatif part vers chaque compagnon ayant une adresse et n'ayant pas répondu. Jamais deux fois le même jour. | manuel (W3/W7) |
+| K8 | La relance du samedi | Chaque samedi à 9 h (Paris), un e-mail nominatif part vers chaque compagnon ayant une adresse et n'ayant pas répondu. Jamais deux fois le même jour. | recette (à blanc) + W7 (en vrai) |

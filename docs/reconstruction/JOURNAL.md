@@ -7,16 +7,17 @@ Le **prochain geste** est toujours en tête. Les entrées de workflow sont en ba
 
 ## Prochain geste
 
-W6 est fait, porte verte (2026-09-28) : voir la fin de l'entrée W6. Rien n'est fusionné sur `main`.
+W8 est faite, porte verte (2026-09-28) : la recette de GESTES.md a été jouée sur la pile Docker qui partira sur le VPS, dans Chromium. Voir l'entrée W8 et [`RECETTE.md`](RECETTE.md). Rien n'est fusionné sur `main`.
 
 La suite attend le propriétaire :
-1. **Quel dépôt fait foi** (question 9). Sans réponse, les commits de la porte restent sur la branche `claude/happy-feynman-rpp9pt` de `travaux_geoplan`.
+1. **Quel dépôt fait foi** (question 9). Sans réponse, les commits restent sur la branche `claude/happy-feynman-rpp9pt` de `travaux_geoplan`.
 2. **W7, la bascule** (question 11) : un VPS, un domaine, et « on bascule ».
-3. En attendant, sans rien toucher à la production : rejouer le filet dans WebKit et les captures sur la machine du propriétaire (la porte n'a tourné que dans Chromium) ; puis W8, la recette de GESTES.md, peut commencer contre la source `api` en local. C'est elle qui essaiera sur l'iPhone les soupçons laissés par la relecture (le son après un relancement, un glisser quand l'application passe en arrière-plan).
+3. **U4 et U14** (question 12) : deux défauts gardés tels quels, à trancher.
+4. Sur sa machine, sans rien toucher à la production : le filet dans WebKit et les captures (les portes de W6 et de W8 n'ont tourné que dans Chromium) ; la recette dans WebKit (`npm run recette -w @geoplan/web`, préparation dans RECETTE.md) ; puis, sur l'iPhone de Geoffrey, la liste « Ce qui reste à jouer sur un iPhone » de RECETTE.md.
 
-Pistes : « semaine » coûte encore une vingtaine d'images au rendu des fiches, pas au mouvement ; le `will-change` de la puce, sans effet mesurable, à retirer avec un contrôle des captures ; le rendu des onglets de Radix à chaque jour choisi (+0,2 image, W5).
+Sans attendre : W9 peut commencer (le README de la nouvelle pile, le sort proposé de `legacy/`, `supabase/`, `dist-preview/`) ; son bilan chiffré se fera après la bascule.
 
-Reste de W4 pour le propriétaire : l'essai en mode avion sur l'iPhone.
+Pistes : « semaine » coûte encore une vingtaine d'images au rendu des fiches, pas au mouvement ; le `will-change` de la puce, sans effet mesurable, à retirer avec un contrôle des captures ; le rendu des onglets de Radix à chaque jour choisi (+0,2 image, W5) ; deux toasts à la fois se superposent exactement (comme à la référence).
 
 ## État
 
@@ -29,7 +30,9 @@ Reste de W4 pour le propriétaire : l'essai en mode avion sur l'iPhone.
 | W4 État client | `reconstruction/w4-client` | fait, porte verte (reste l'essai en mode avion sur l'iPhone) |
 | W5 Interface | `reconstruction/w5-ui` | fait, porte verte |
 | W6 Mouvement | `reconstruction/w6-mouvement`, puis `claude/happy-feynman-rpp9pt` (`travaux_geoplan`) | fait, porte verte (filet joué dans Chromium ; WebKit et captures à rejouer) |
-| W7 à W9 | — | à faire |
+| W7 Bascule | — | attend le propriétaire (question 11) |
+| W8 Recette | `claude/happy-feynman-rpp9pt` (`travaux_geoplan`) | fait, porte verte (dans Chromium ; WebKit et l'iPhone : `RECETTE.md`) |
+| W9 Documentation et ménage | — | à faire |
 
 **Rien n'est fusionné sur `main`.** Voir « Questions au propriétaire », point 1.
 
@@ -50,7 +53,8 @@ Ce que je ne peux pas trancher seul. Le reste est décidé dans les ADR.
 8. **GSAP n'est pas dans W6**, alors que la pile cible le nomme. Essayé là où la mission l'attendait (la déformation du vivier), il perd 1,86 image par geste là où le navigateur seul (Web Animations) en perd 0,44 ; et son horloge (`Date.now`) est figée par le filet de tests. Le mouvement passe par le CSS et Web Animations, sans bibliothèque (ADR-006) : Framer Motion part aussi, et les deux pages s'allègent de 37 ko. Si tu tiens à GSAP pour une raison que je ne vois pas (des séquences à venir bien plus riches, par exemple), il se remet en un module : dis-le-moi.
 9. **Quel dépôt fait foi ?** W6 a été fini dans `abasse-ali/travaux_geoplan`, une copie de ta copie de travail en un seul commit : l'historique de W0 à W6 (un commit par correction, chacun annoncé) n'y est pas. Il est dans `abasse-ali/geoplan`, et, pour les branches jamais poussées (W2 à W6 au moins), seulement sur ta machine, où la copie de travail de W6 avait encore des changements non enregistrés. Netlify publie la `main` de `geoplan`. Deux voies : (a) tu enregistres et pousses `reconstruction/w6-mouvement` (avec ses changements en cours) sur `geoplan`, et je reporte dessus les commits de la porte, un par un ; (b) `travaux_geoplan` devient la référence, et l'historique d'avant reste dans `geoplan`. Je recommande (a) : l'historique est la preuve de chaque correction.
 10. **`apps/web/dist/` est versionné dans `travaux_geoplan`**, sans doute par la copie : c'est une construction, déjà périmée (d'avant le lâcher et la vague). Je propose de le retirer et de l'ignorer ; le sort de `dist/` et `dist-preview/` reste à trancher en W9. Je n'y touche pas sans ton accord.
-11. **W7, la bascule, attend trois choses de toi** : un VPS (Hetzner ou Scaleway, voir `infra/deploy/README.md`), un nom de domaine, et le mot « on bascule ». Rien d'autre ne bloque : l'API, l'infrastructure et le client pour l'API sont prêts et testés en local.
+11. **W7, la bascule, attend trois choses de toi** : un VPS (Hetzner ou Scaleway, voir `infra/deploy/README.md`), un nom de domaine, et le mot « on bascule ». Rien d'autre ne bloque : l'API, l'infrastructure et le client pour l'API sont prêts et testés en local, et la recette (W8) est passée sur la pile qui partira sur le VPS.
+12. **Deux défauts gardés tels quels depuis W1, que la recette a retrouvés, à trancher.** U4 (C5) : un simple appui sur la barre d'une étape la met à 100 % (ou à 0) ; un geste que rien n'annonce, qui peut cocher une étape entière d'un doigt qui passe. Je propose de le retirer (l'appui ne ferait plus rien ; le glisser, le clavier et les missions restent), sauf si Geoffrey s'en sert. U14 (J4) : sur la page du compagnon, au-delà de 300 caractères, l'écran de confirmation montre le mot entier alors que la base n'en garde que 300 ; je propose de limiter la saisie à 300 caractères, pour que ce qui s'affiche soit ce qui est reçu. Deux changements visibles : j'attends ton accord.
 
 ---
 
@@ -86,6 +90,9 @@ Sévérité : **haute** = Geoffrey ou un compagnon est gêné, **moyenne** = don
 | P3 | `cron.sql` : l'URL modèle n'a pas de `https://`. Le planning `0 7 * * 6` est en UTC : 9 h à Paris l'été, **8 h l'hiver**. | moyenne | oui, dans le fichier | corrigé par construction en W3 (tâche en Europe/Paris) |
 | P4 | La relance n'est pas idempotente pour ceux qui n'ont pas répondu : deux appels, deux e-mails. Le README affirme le contraire. | moyenne | oui, dans le code | **corrigé** dans l'API (W3) : `sent_at` + verrou Redis ; Supabase garde le défaut jusqu'à la bascule |
 | P5 | Dépendances : `vite` 6.0.7 et son `esbuild` ont deux avis de sécurité, sur le serveur de développement seulement. | basse | `npm audit` | montée de Vite en W3/W4, avec le monorepo |
+| P6 | La pile Docker ne servait pas l'application : nginx servait la page d'attente posée en W3, que W4 devait remplacer. `docker compose up` démarrait une API sans application, jamais servie derrière ce nginx ni sous sa politique de sécurité. | haute (pour W7) | pile montée en local, W8 | **corrigé** `c4985e6` |
+| P7 | Sous la politique de sécurité de nginx (`style-src 'self'`), trois feuilles de style créées par le script étaient refusées (vaul, et Radix) : la feuille du bas perdait son `touch-action`, et ne se fermait plus d'un glisser sur l'iPhone. | moyenne | pile montée en local, W8 ; e2e (P7, projet pwa) | **corrigé** `3b4187b` (empreintes, pas `'unsafe-inline'`) |
+| P8 | L'API arrêtée, nginx attendait 60 s qu'une connexion s'établisse (le réseau de Docker gardait l'ancienne adresse) : la page du compagnon restait une minute sur « Chargement… » avant « Connexion impossible », l'application sur « … ». | moyenne | recette W8 (J8), mesuré (504 en 60,0 s) | **corrigé** `9d73e54` (5 s ; 504 en 5,0 s) |
 
 ### Domaine (`src/domain.ts`)
 
@@ -174,6 +181,7 @@ D2 est **confirmé** par un test de propriétés (un peintre niveau 3 « débloq
 | V12 | Revenu par « Auj. » d'une semaine plus loin, le libellé entrait par la droite, comme si l'on avançait. | basse | relecture adversariale W6, e2e (A3) | **corrigé** `e3b66a0` |
 | V13 | Au lancement connecté, la marque d'attente s'éteignait puis se rallumait (deux attentes à la suite). Préexistant. | basse | relecture adversariale W6, e2e (K6, sources connectées) | **corrigé** `b8ac329` |
 | V14 | En développement seulement (StrictMode), un volet monté ouvert s'animait de sa hauteur à sa hauteur ; le témoin de K3 pouvait s'en contenter. | négligeable | relecture adversariale W6, e2e (E1, témoin K3) | **corrigé** `25e1eff` |
+| U29 | Lancée sans réseau (ou le serveur injoignable), rien à envoyer : le bouton d'état disait « 0 en attente », en orange. Déjà dans l'ancienne version. | basse | recette W8 (H5), e2e (H1, sources api et supabase) | **corrigé** `02df60c` (« Hors ligne ») |
 
 ---
 
@@ -709,3 +717,44 @@ Pour mesurer ici, l'outil (`npm run images-perdues`) lit `GEOPLAN_E2E_CHROMIUM`,
 **Écarts au plan, et pourquoi.**
 - Le filet a tourné dans Chromium, pas dans WebKit : à rejouer sur la machine du propriétaire, avec les captures (`npm run test:e2e`, `npm run test:captures`). J'attends zéro image changée : au repos, la porte ne change pas le dessin (un volet rogne par `clip` mais contient ses marges comme avec `hidden`, le champ de fichier dépasse déjà 44 px dans WebKit, les entrées retirées ne jouaient qu'en chemin, et les captures attendent la fin des animations).
 - Mes propres erreurs, dites : U26 annoncé « sans changement de dessin » alors qu'il en changeait un (V8, rattrapé par la relecture) ; un test de V9 qui ne pouvait pas échouer (la grille rouverte trop tard, hors de la fenêtre de la vague), réécrit pour agir dans la fenêtre, et qui exige de l'être ; le test du trait (V11) mesurait le plus grand écart d'une image à l'autre, que la charge faisait dépasser à son témoin : il mesure la continuité au toucher (`f03a3f7`) ; une première mesure du `will-change` faite sur une machine chargée ; et une vérification lancée pendant le filet complet, dans le même dossier de résultats : Playwright l'a vidé en démarrant, et sept tests de la source supabase ont perdu leurs traces (ENOENT) — rejouée seule ensuite (tableau ci-dessus). Deux suites Playwright ne tournent jamais ensemble dans la même copie.
+
+### W8 — La recette (2026-09-28)
+
+Commencée sans attendre W7 : la recette se joue sur la pile de production montée en local, pas sur la production. Rien n'a changé pour Geoffrey ni pour les compagnons : rien n'est fusionné, et la production lit toujours Supabase.
+
+**La pile, d'abord.** Pour jouer « avec la source `api` », j'ai monté `infra/docker-compose.yml` tel qu'il partira sur le VPS. Deux défauts de la pile elle-même, avant tout geste :
+- **P6** : nginx servait une page d'attente, pas l'application. W3 l'avait posée le temps que le client parle à l'API ; W4 devait la remplacer, et ne l'a pas fait. L'image nginx construit maintenant l'application pour l'API et la sert (`c4985e6`).
+- **P7** : servie sous la politique de sécurité de nginx, l'application voyait refuser trois feuilles de style qu'elle crée par le script (vaul, Radix) ; la feuille du bas perdait son `touch-action` et ne se fermait plus d'un glisser. Admises par leur empreinte, pas par `'unsafe-inline'` ; le filet sert désormais la construction sous la même politique, lue dans `securite.conf` (`3b4187b`).
+
+**La recette.** Un parcours de bout en bout, dans Chromium au format iPhone 15, avec la vraie horloge : chaque ligne de GESTES.md a son geste, son contrôle et sa capture. Six appareils : le téléphone de Geoffrey, un second appareil connecté, le téléphone d'un compagnon, un en mode sombre, un en mouvement réduit (et son témoin), un ordinateur à la souris. Le détail, ligne par ligne : [`RECETTE.md`](RECETTE.md).
+
+| | |
+|---|---|
+| Lignes jouées | 74 sur 76 : E3 exige des chantiers tous livrés, H6 une construction sans serveur (tenues par le filet) |
+| Régressions | une, trouvée et corrigée : P8 |
+| Améliorées (un défaut de la référence, vu corrigé ; ou un ajout) | 13 : A2, E2, H1, H4, H5, I4, J5, J10, J11, K3, K5, K7, K8 |
+| Fonctionnent | 61, dont J8 après P8 |
+| ⚠ inchangés | C5 (U4, à discuter), J4 (U14, figé) |
+| Politique de sécurité, console | aucune violation, aucune erreur, sur les six appareils |
+
+Deux constats, un commit chacun :
+- **P8** (J8) : l'API arrêtée, la page du compagnon restait une minute sur « Chargement… ». nginx attendait 60 s qu'une connexion à l'API s'établisse, et le réseau de Docker gardait l'ancienne adresse de l'API. Mesuré : 504 en 60,0 s ; après, en 5,0 s ; « Connexion impossible » en 5,4 s (`9d73e54`). Le test relit la configuration ; la recette rejoue le geste.
+- **U29** (H5) : lancée sans réseau, rien à envoyer, le bouton d'état disait « 0 en attente », en orange. Déjà dans l'ancienne version. Il dit « Hors ligne » ; « N en attente » dès qu'une modification attend (`02df60c`). Le test relance l'application le serveur injoignable, sur les sources api et supabase : « 0 en attente » sur les deux sans la correction.
+
+En chemin : le limiteur de connexion a tenu sur la vraie pile (« Trop de tentatives. Réessayez dans 12 min. » : la recette se connecte huit fois par passage, la limite est de dix par quart d'heure) ; deux toasts à la fois se superposent exactement, comme à la référence ; un chantier en retard reste « à pourvoir » après sa fin prévue (« Répartir » y pose encore 45 journées en semaine 50) : voulu, c'est pourquoi E3 n'a pas pu se jouer ici.
+
+**L'outil.** La recette est versionnée (`apps/web/recette/`, `npm run recette -w @geoplan/web`) : elle se rejoue dans WebKit sur la machine du propriétaire, et avant la bascule. Elle arrête l'API, coupe le réseau, remplace les données : elle refuse toute adresse qui n'est pas locale. Elle part d'une base gardée (`recette/base.sh garder`, puis `remettre` à chaque passage) et vérifie qu'elle en part. Elle calcule ses dates : elle se joue du lundi au jeudi (à partir du vendredi, une demande de dispos vise la semaine suivante).
+
+**La porte.**
+
+| Critère | Résultat |
+|---|---|
+| Chaque ligne de GESTES.md jouée pour de vrai, en viewport iPhone, source api | 74 sur 76, dans Chromium ; E3 et H6 n'existent pas sur cette pile (tenues par le filet) |
+| Toute régression bloque la fin | une trouvée, P8, corrigée ; U29, préexistant, corrigé aussi |
+| W1 vert | types ; 595 tests unitaires (dont 223 de l'API) et les 3 échecs attendus ; bout en bout, dans Chromium, chaque source jouée seule : locale 157 passés, 5 sautés ; supabase 137 passés, 8 sautés ; api 145 passés, 8 sautés |
+| Relecture adversariale | en cours |
+| Poids (ce que nginx sert) | `index.html` 112,6 ko, `dispo.html` 59,1 ko |
+
+**Écarts au plan, et pourquoi.**
+- W8 avant W7 : la mission les ordonne dans l'autre sens, mais W7 attend le propriétaire, et W8 ne dépendait que de la pile. Après la bascule, la recette ne se rejoue pas sur la production (elle en change les données, elle arrête l'API) : un contrôle qui ne change rien la remplacera (se connecter, lire la semaine, un geste aussitôt défait).
+- La recette a tourné dans Chromium, pas dans WebKit, et pas sur un iPhone : ce qui ne se voit que là est listé à la fin de RECETTE.md, et la recette se rejoue dans WebKit sur la machine du propriétaire.
