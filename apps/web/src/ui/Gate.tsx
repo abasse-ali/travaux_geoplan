@@ -14,10 +14,11 @@
    au lieu de proposer des boutons qui n'aboutiraient pas (constat U9).
    ============================================================ */
 
-import { useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
 import { Mark } from "./bits";
 import { bouton, cn } from "./primitives/classes";
 import { connecter, useSession } from "../donnees/react";
+import { useEntree } from "./mouvement/entree";
 
 type Mode = "in" | "up" | "oubli";
 
@@ -39,6 +40,13 @@ const MESSAGES: Record<string, string> = {
 const lisible = (e: { message?: string } | null | undefined): string =>
   MESSAGES[e?.message as string] || e?.message || "Connexion impossible";
 
+/* Un mode de l'écran, qui entre en glissant s'il arrive après le premier
+   affichage. Décidé à sa naissance. */
+function ModeEcran({ entre, children }: { entre: boolean; children: ReactNode }){
+  const anime = useEntree(entre);
+  return <div className={cn(anime && "animate-[carte-in_.3s_cubic-bezier(.22,.9,.3,1)] motion-reduce:animate-none")}>{children}</div>;
+}
+
 export default function Gate(){
   const depot = useSession(s => s.depot);
   const serveur = depot?.source === "api";
@@ -48,6 +56,8 @@ export default function Gate(){
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
+  const affiche = useRef(false);
+  useEffect(() => { affiche.current = true; }, []);
 
   const pret = email.trim().length > 3 && (mode === "oubli" || pass.length >= 6);
 
@@ -94,8 +104,10 @@ export default function Gate(){
       <h2 className="mx-0 mt-0 mb-1.5 font-display text-[24px]/[1.15] font-bold tracking-[-.02em]">Geoplan</h2>
 
       {/* Chaque mode (connexion, création, mot de passe oublié) entre en
-          CSS (carte-in) ; l'ancien laisse sa place d'un coup. */}
-      <div key={mode} className="animate-[carte-in_.3s_cubic-bezier(.22,.9,.3,1)] motion-reduce:animate-none">
+          CSS (carte-in) quand on en change ; l'ancien laisse sa place d'un
+          coup. Le premier, là d'emblée, n'entre pas (ADR-006 ; il glissait
+          à chaque ouverture, relecture adversariale de W6). */}
+      <ModeEcran key={mode} entre={affiche.current}>
 
           <p className={TEXTE}>{titres[mode].p}</p>
 
@@ -149,7 +161,7 @@ export default function Gate(){
               </button>
             )}
           </div>
-      </div>
+      </ModeEcran>
 
       {(err || info) && (
         <div data-etat={err ? "erreur" : "info"}

@@ -21,27 +21,50 @@
    l'attribut class au repos.
    ============================================================ */
 
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { Interrupteur } from "./primitives/interrupteur";
 import { anneauDedans, cn, indiceVide, surtitre } from "./primitives/classes";
 import { puce, puceJours, puceNom } from "./puce";
 import { jouerForme, noterForme, type Forme } from "./mouvement/forme";
+import { useEntree } from "./mouvement/entree";
 import { DAYS, DAYS_L, countDays, type Person } from "@geoplan/domain";
 import type { PoolState } from "./types";
 
 /* Une puce libre entre par chipIn (mouvement.css : une animation nommée
-   s'écrit mal en classe), à chaque apparition, comme en W5. Jamais de
-   fill-mode « both » : si l'animation ne démarre pas, la puce reste
-   visible. */
-const PUCE_LIBRE = cn(puce(), "animate-[chipIn_.18s_ease] motion-reduce:animate-none");
+   s'écrit mal en classe) quand elle arrive dans une liste déjà montrée :
+   un jour choisi, une puce rendue au vivier. Celles que la liste montre
+   d'emblée — au lancement, à l'ouverture du vivier, qui a son propre
+   fondu — n'entrent pas (ADR-006) ; elles entraient toutes, comme en W5
+   (relecture adversariale de W6). Décidé à la naissance de la puce.
+   Jamais de fill-mode « both » : si l'animation ne démarre pas, la puce
+   reste visible. */
+const PUCE_LIBRE = puce();
+const PUCE_ARRIVEE = cn(PUCE_LIBRE, "animate-[chipIn_.18s_ease] motion-reduce:animate-none");
 
-function Chip({ p, days }: { p: Person; days: boolean[] }){
+function Chip({ p, days, entre }: { p: Person; days: boolean[]; entre: boolean }){
+  const anime = useEntree(entre);
   return (
-    <button className={PUCE_LIBRE} data-cible="serree" data-pid={p.id} data-name={p.name}>
+    <button className={anime ? PUCE_ARRIVEE : PUCE_LIBRE} data-cible="serree" data-pid={p.id} data-name={p.name}>
       <span className={puceNom}>{p.name}</span>
       <span data-jours className={puceJours}>{countDays(days)}j</span>
     </button>
   );
+}
+
+/* « Personne de libre » : même règle que les puces. */
+function Vide({ entre, children }: { entre: boolean; children: ReactNode }){
+  const anime = useEntree(entre);
+  return <p className={cn(indiceVide, anime && "animate-[fade_.2s_ease] motion-reduce:animate-none")}>{children}</p>;
+}
+
+/* La liste des libres, montée avec le visage déplié : ce qu'elle montre
+   à sa naissance était là d'emblée. */
+function Libres({ free, daysOf, week, dayIndex }: Pick<IslandProps, "free" | "daysOf" | "week" | "dayIndex">){
+  const affichee = useRef(false);
+  useEffect(() => { affichee.current = true; }, []);
+  return free.length
+    ? <>{free.map(p => <Chip key={p.id} p={p} days={daysOf(p, week)} entre={affichee.current} />)}</>
+    : <Vide key="vide" entre={affichee.current}>Personne de libre {DAYS_L[dayIndex].toLowerCase()}.</Vide>;
 }
 
 /* L'îlot, comme l'îlot dynamique d'un iPhone. Replié, il ne prend que
@@ -165,11 +188,7 @@ export default function Island({ free, daysOf, week, dayIndex, state, setState, 
           </div>
           {/* La liste ne défile plus pendant un glisser. */}
           <div className="flex min-h-0 flex-wrap items-start gap-1.5 overflow-y-auto overscroll-contain px-3 pb-3 in-[.dragging]:overflow-hidden">
-            {free.length
-              ? free.map(p => <Chip key={p.id} p={p} days={daysOf(p, week)} />)
-              : <p key="vide" className={cn(indiceVide, "animate-[fade_.2s_ease] motion-reduce:animate-none")}>
-                  Personne de libre {DAYS_L[dayIndex].toLowerCase()}.
-                </p>}
+            <Libres free={free} daysOf={daysOf} week={week} dayIndex={dayIndex} />
           </div>
         </div>
       )}

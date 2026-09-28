@@ -125,6 +125,79 @@ test("E2 — le plan se pose en vague, jour après jour", async ({ page }) => {
     if (a.r === b.r && a.j < b.j) expect(a.delai).toBeLessThan(b.delai);
 });
 
+test.describe("E2 — la vague ne déborde pas du plan", () => {
+  /* Relecture adversariale de W6 : pendant la seconde qui suivait
+     « Appliquer ce plan », tout nom qui naissait dans la grille entrait en
+     vague, qu'il vienne du plan ou non. */
+  async function appliquer(page: Page): Promise<void> {
+    const f = await ouvrirRepartir(page);
+    await f.getByRole("button", { name: "Appliquer ce plan" }).click();
+    await expect(f).toBeHidden();
+  }
+
+  test("E2 — la semaine suivante, ouverte aussitôt, n'entre pas en vague", async ({ page }) => {
+    // Des noms la semaine 39, que le plan (semaine 38) ne touche pas.
+    await openLocal(page, effectifAvec(e => {
+      poser(e, S9, "2026-09-21", ["p_giorgi", "p_nixon"]);
+      poser(e, S12, "2026-09-22", ["p_aklan"]);
+    }));
+    await appliquer(page);
+    await page.getByRole("button", { name: "Semaine suivante" }).click();
+    await expect(page.locator("[data-semaine]")).toHaveText(/^Sem\. 39/);
+    expect(await vagueDeLaGrille(page)).toEqual([]);
+  });
+
+  test("E2 — la grille quittée puis rouverte aussitôt ne rejoue pas la vague", async ({ page }) => {
+    await openLocal(page, effectifAvec(e => poser(e, S9, JOURS[0]!, ["p_kia"])));
+    await ouvrirRepartir(page);
+    /* « Appliquer ce plan », puis Chantiers et retour à Semaine, d'une
+       traite et dans la fenêtre de la vague (sinon le test ne prouve rien) :
+       joué dans la page, les onglets pris sous la feuille qui descend. */
+    const ecoule = await page.evaluate(async () => {
+      const image = () => new Promise(r => requestAnimationFrame(r));
+      const appuyer = (el: Element) => {
+        for (const t of ["pointerdown", "mousedown", "pointerup", "mouseup"])
+          el.dispatchEvent(new (t.startsWith("pointer") ? PointerEvent : MouseEvent)(t, { bubbles: true, cancelable: true, button: 0 }));
+        (el as HTMLElement).click();
+      };
+      const onglets = () => [...document.querySelectorAll('[aria-label="Onglets"] [role=tab]')];
+      const t0 = performance.now();
+      [...document.querySelectorAll("button")].find(b => b.textContent === "Appliquer ce plan")!.click();
+      await image(); await image();
+      appuyer(onglets()[0]!);
+      await image(); await image();
+      appuyer(onglets()[1]!);
+      await image(); await image();
+      return performance.now() - t0;
+    });
+    await expect(page.locator("[data-grille-semaine]")).toBeVisible();
+    expect(ecoule, "rouverte dans la fenêtre de la vague").toBeLessThan(1_000);
+    expect(await vagueDeLaGrille(page)).toEqual([]);
+  });
+});
+
+test("E1 — les jours de la feuille, dépliés dès l'ouverture, ne s'animent pas", async ({ page }) => {
+  /* Relecture adversariale de W6 : en développement (StrictMode rejoue
+     les effets au montage), un volet monté déjà ouvert s'animait de sa
+     hauteur à sa hauteur. En production, rien : le test tourne contre le
+     serveur de développement. */
+  await page.addInitScript(() => {
+    const w = window as unknown as { __volets: string[] };
+    w.__volets = [];
+    const animer = Element.prototype.animate;
+    Element.prototype.animate = function (this: Element, ...a: Parameters<Element["animate"]>) {
+      const r = animer.apply(this, a);
+      const k = a[0];
+      if (Array.isArray(k) && k[0] && "height" in k[0]) w.__volets.push(JSON.stringify(k));
+      return r;
+    };
+  });
+  await openLocal(page);
+  await ouvrirRepartir(page);
+  await page.waitForTimeout(500);
+  expect(await page.evaluate(() => (window as unknown as { __volets: string[] }).__volets)).toEqual([]);
+});
+
 test.describe("K3 — prefers-reduced-motion", () => {
   test.use({ reducedMotion: "reduce" });
   test("K3 — le plan se pose d'un coup", async ({ page }) => {

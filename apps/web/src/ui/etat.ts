@@ -28,10 +28,13 @@ export function relireUi(): Pick<UiState, "tab" | "poolState" | "urgence" | "son
 export interface EtatUi extends UiState {
   sheet: SheetState | null;
   toasts: ToastItem[];
-  /** L'instant (performance.now) où un plan de « Répartir » a été
-      appliqué : la grille Semaine le pose en vague (W6). */
-  vague: number | null;
+  /** Le dernier plan de « Répartir » appliqué : la grille Semaine pose
+      en vague les noms qu'il fait arriver (W6). L'instant (performance.now),
+      la semaine, et chaque nom posé (« chantier#jour#compagnon »). */
+  vague: Vague | null;
 }
+
+export interface Vague { t: number; semaine: string; noms: ReadonlySet<string> }
 
 export const useUi = create<EtatUi>(() => {
   const t = todayISO();

@@ -2,8 +2,8 @@
 
 import { expect, test, type Page } from "@playwright/test";
 import {
-  IDX_AUJ, S12, S9, TODAY, carte, effectifAvec, feuille, glisser, glisserDansLaPage, jours, montrerZone, onglet, openLocal,
-  poser, puceSur, puceVivier, survolerLeVivier, toastsVus, vivier, vuToast, zone
+  IDX_AUJ, JOURS, S12, S9, TODAY, carte, effectifAvec, feuille, glisser, glisserDansLaPage, jours, montrerZone, onglet,
+  openLocal, poser, puceSur, puceVivier, source, survolerLeVivier, toastsVus, useFakeSupabase, vivier, vuToast, zone
 } from "./helpers";
 
 test.describe.configure({ timeout: 60_000 });
@@ -347,31 +347,111 @@ test("K5 — deux toasts au plus, et chacun vit 2,8 s", async ({ page }) => {
   expect(vie).toBeLessThan(6_000);
 });
 
-test("K6 — une entrée ne se rejoue pas quand l'application se redessine", async ({ page }) => {
-  /* Les entrées sont des animations CSS : une classe d'entrée ajoutée à
-     un élément déjà là la rejoue. En W6, le libellé de la semaine, « Auj. »
-     et le fondu de l'écran recevaient la leur au deuxième rendu de la coque
-     (une référence relue à chaque rendu) : le libellé glissait sans que la
-     semaine change, et couvrait 2 px de la flèche (L2, une fois sur deux).
-     On note chaque animation qui démarre, dès le chargement ; la coque se
-     redessine (l'urgence, deux fois) sans que rien n'arrive. */
+/* Chaque animation qui démarre, dès le chargement, et où : pour K6. */
+async function noterLesEntrees(page: Page): Promise<void> {
   await page.addInitScript(() => {
     const w = window as unknown as { __entrees: string[] };
     w.__entrees = [];
     document.addEventListener("animationstart", e => {
       const el = e.target as Element;
-      w.__entrees.push(e.animationName + " @ " + (el.closest("[data-semaine]") ? "semaine"
-        : el.getAttribute("role") ?? el.textContent?.trim().slice(0, 12) ?? el.tagName));
+      const ou = el.closest("[data-semaine]") ? "semaine" : el.closest("#vivier") ? "vivier"
+        : el.closest("[data-drop]") ? "zone" : el.closest("[data-grille-semaine]") ? "grille"
+        : el.closest("[data-toast]") ? "toast" : el.closest("[role=tabpanel]") ? "panneau" : "ailleurs";
+      w.__entrees.push(e.animationName + " @ " + ou);
     }, true);
   });
-  await openLocal(page);
-  await page.waitForTimeout(1_500);
-  const urgence = vivier(page).getByRole("switch", { name: "Urgence" });
-  await urgence.click();
-  await urgence.click();
-  await page.waitForTimeout(800);
-  const entrees = await page.evaluate(() => (window as unknown as { __entrees: string[] }).__entrees);
-  expect(entrees.filter(e => /^(semaine-|auj-in|fade @ tabpanel)/.test(e))).toEqual([]);
+}
+/* Ce qui peut s'animer sans que rien n'arrive à l'écran : un toast (les
+   gestes des tests en font paraître), le point d'envoi, l'attente du
+   lancement. Toute autre animation au chargement est une entrée qui joue
+   pour rien. */
+const entreesSansArrivee = async (page: Page): Promise<string[]> =>
+  (await page.evaluate(() => (window as unknown as { __entrees: string[] }).__entrees))
+    .filter(e => !/^(toast-in|toast-out|sdot-pulse|boot-in) /.test(e));
+
+test.describe("K6 — une entrée ne se joue qu'à l'arrivée de ce qu'elle présente", () => {
+  test("K6 — une entrée ne se rejoue pas quand l'application se redessine", async ({ page }) => {
+    /* Les entrées sont des animations CSS : une classe d'entrée ajoutée à
+       un élément déjà là la rejoue. En W6, le libellé de la semaine, « Auj. »
+       et le fondu de l'écran recevaient la leur au deuxième rendu de la coque
+       (une référence relue à chaque rendu) : le libellé glissait sans que la
+       semaine change, et couvrait 2 px de la flèche (L2, une fois sur deux).
+       La coque se redessine (l'urgence, deux fois) sans que rien n'arrive. */
+    await noterLesEntrees(page);
+    await openLocal(page);
+    await page.waitForTimeout(1_500);
+    const urgence = vivier(page).getByRole("switch", { name: "Urgence" });
+    await urgence.click();
+    await urgence.click();
+    await page.waitForTimeout(800);
+    expect(await entreesSansArrivee(page)).toEqual([]);
+  });
+
+  test("K6 — au lancement, ni les puces du vivier ni celles des chantiers n'entrent", async ({ page }) => {
+    /* Relecture adversariale de W6 : les puces du vivier (ouvert par
+       défaut) entraient toutes à chaque lancement ; celles des chantiers,
+       décidées à leur naissance, non. Rien n'arrive : rien n'entre. */
+    await noterLesEntrees(page);
+    await openLocal(page, effectifAvec(e => poser(e, S9, TODAY, ["p_giorgi"])));
+    await expect(vivier(page).locator(".chip").first()).toBeVisible();
+    await page.waitForTimeout(1_000);
+    expect(await entreesSansArrivee(page)).toEqual([]);
+  });
+
+  test("K6 — lancée sur l'onglet Semaine, la grille ne fait pas entrer ses noms", async ({ page }) => {
+    await noterLesEntrees(page);
+    await openLocal(page, {
+      ...effectifAvec(e => { poser(e, S9, JOURS[0]!, ["p_giorgi", "p_nixon"]); poser(e, S12, JOURS[1]!, ["p_aklan"]); }),
+      ui: { tab: "semaine" }
+    });
+    await expect(page.locator("[data-grille-semaine]")).toBeVisible();
+    await page.waitForTimeout(1_000);
+    expect(await entreesSansArrivee(page)).toEqual([]);
+  });
+
+  test("K6 — l'écran de connexion ne glisse pas à son ouverture", async ({ page }) => {
+    test.skip(source() !== "local", "l'écran de connexion de Supabase, servi par la source locale");
+    await noterLesEntrees(page);
+    await useFakeSupabase(page);
+    await page.route(/supabase\.co/, r => r.abort());
+    await page.goto("/");
+    await expect(page.getByRole("button", { name: "Se connecter" })).toBeVisible({ timeout: 20_000 });
+    await page.waitForTimeout(800);
+    expect(await entreesSansArrivee(page)).toEqual([]);
+    // Témoin : changer de mode, lui, fait entrer le nouveau.
+    await page.getByRole("button", { name: "Créer un compte" }).click();
+    await expect.poll(() => entreesSansArrivee(page)).toContain("carte-in @ ailleurs");
+  });
+
+  test("K6 — une puce qui arrive, elle, entre", async ({ page }) => {
+    /* Témoin des tests ci-dessus : changer de jour fait arriver d'autres
+       puces dans le vivier, qui entrent. */
+    await noterLesEntrees(page);
+    await openLocal(page);
+    await jours(page).nth(IDX_AUJ + 1).click();
+    await expect.poll(() => entreesSansArrivee(page)).toContain("chipIn @ vivier");
+  });
+
+  test("K6 — au lancement connecté, la marque d'attente ne s'éteint pas pour se rallumer", async ({ page }) => {
+    /* Relecture adversariale de W6 : deux attentes se suivent au lancement
+       connecté (la racine, puis la coque), et la seconde rallumait la
+       marque depuis zéro. Sans objet en source locale : pas d'attente. */
+    await page.addInitScript(() => {
+      const w = window as unknown as { __opacites: number[] };
+      w.__opacites = [];
+      const relever = () => {
+        const a = [...document.querySelectorAll<HTMLElement>("#root > div")].find(d => getComputedStyle(d).animationName === "boot-in");
+        if (a) w.__opacites.push(Math.round(parseFloat(getComputedStyle(a).opacity) * 100) / 100);
+        else if (w.__opacites.length && document.querySelector("header")) return;
+        requestAnimationFrame(relever);
+      };
+      requestAnimationFrame(relever);
+    });
+    await openLocal(page);
+    const o = await page.evaluate(() => (window as unknown as { __opacites: number[] }).__opacites);
+    const recul = Math.max(0, ...o.slice(1).map((x, i) => o[i]! - x));
+    expect(recul, JSON.stringify(o)).toBeLessThanOrEqual(0.02);
+  });
 });
 
 test("K7 — le son des gestes : éteint par défaut, une note pour poser, une pour retirer, retenu sur l'appareil", async ({ page }) => {

@@ -84,9 +84,21 @@ class BarriereFeuilles extends Component<{ ouverte: boolean; children: ReactNode
 }
 
 /* Le temps de relire la session : la marque seule, qui respire (boot-in,
-   dans mouvement.css). Assez discret pour ne pas ressembler à un écran de plus. */
+   dans mouvement.css). Assez discret pour ne pas ressembler à un écran de plus.
+   Connecté, deux attentes se suivent au lancement, celle de la racine
+   (main.tsx) puis celle de la coque : la seconde reprend l'apparition là
+   où la première l'a laissée (un délai négatif), au lieu de rallumer la
+   marque depuis zéro (relecture adversariale de W6). */
+let debutAttente: number | null = null;
 export function Attente(){
-  return <div className="grid min-h-dvh place-items-center animate-[boot-in_.5s_ease_both]"><Mark /></div>;
+  const [ecoule] = useState(() => {
+    if (debutAttente === null) { debutAttente = performance.now(); return 0; }
+    return performance.now() - debutAttente;
+  });
+  return (
+    <div className="grid min-h-dvh place-items-center animate-[boot-in_.5s_ease_both]"
+      style={ecoule ? { animationDelay: -Math.round(ecoule) + "ms" } : undefined}><Mark /></div>
+  );
 }
 
 /* Le bouton d'état, selon l'état des envois : sa couleur, et celle du

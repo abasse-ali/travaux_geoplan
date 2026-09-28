@@ -4,10 +4,11 @@
    ne montrait depuis que tout se pose au jour.
    ============================================================ */
 
-import { useId, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { bouton, carte, cibleSerree, cn, pile, surtitre } from "./primitives/classes";
-import { useUi } from "./etat";
+import { patchUi, useUi } from "./etat";
 import { mouvementReduit } from "./mouvement/reduit";
+import { useEntree } from "./mouvement/entree";
 import {
   DAYS, DAYS_L, WEEKEND, weekDates, parse, todayISO, fmtRange, weekNum,
   teamOn, weekRoster, siteProgress, isActive, type Person
@@ -22,7 +23,10 @@ const ETIQUETTE = "flex min-w-0 flex-col justify-center gap-0.5 px-0.5 py-1";
 const CASE = "flex flex-col items-center justify-center gap-px rounded-[7px] px-px py-0.75";
 /* Les initiales d'une case pleine, et son « +N ». Elles entrent par
    une animation à l'insertion (chipIn, dans mouvement.css : une animation
-   nommée s'écrit mal en classe). */
+   nommée s'écrit mal en classe) quand elles arrivent dans une grille déjà
+   montrée — une autre semaine, une réponse, un plan. Celles que la grille
+   montre à son ouverture n'entrent pas : le panneau a son fondu (ADR-006 ;
+   elles entraient toutes, relecture adversariale de W6). */
 const INITIALES = "font-display text-[9.5px]/[1.15] font-semibold tracking-[.02em] not-italic";
 const ENTREE = "animate-[chipIn_.2s_ease] motion-reduce:animate-none";
 
@@ -36,12 +40,18 @@ const ENTREE = "animate-[chipIn_.2s_ease] motion-reduce:animate-none";
 const VAGUE = { fenetre: 1200, depart: 250, parJour: 70, parRangee: 30 };
 const EN_VAGUE = "animate-[pose-in_.34s_var(--spring)_backwards]";
 
-function Initiales({ nom, delai }: { nom: string; delai: number | null }){
+function Initiales({ nom, delai, entre }: { nom: string; delai: number | null; entre: boolean }){
   const [d] = useState(delai);
+  const anime = useEntree(entre);
   return (
-    <i className={cn(INITIALES, "text-ink-2", d === null ? ENTREE : EN_VAGUE)}
+    <i className={cn(INITIALES, "text-ink-2", d !== null ? EN_VAGUE : anime && ENTREE)}
       style={d === null ? undefined : { animationDelay: d + "ms" }}>{nom}</i>
   );
+}
+
+function Plus({ n, entre }: { n: number; entre: boolean }){
+  const anime = useEntree(entre);
+  return <i className={cn(INITIALES, anime && ENTREE, "text-ink-2")}>+{n}</i>;
 }
 
 /* Le fond et le trait d'une case de chantier. Le conflit prime sur
@@ -67,9 +77,17 @@ export default function Semaine({ vue, ui, act }: { vue: Vue; ui: UiCoque; act: 
   const dates = weekDates(week);
   const today = todayISO();
   const idConflit = useId();
-  /* Juste après « Appliquer ce plan » : les noms qui arrivent entrent en vague. */
+  /* Juste après « Appliquer ce plan » : les noms que le plan fait arriver
+     entrent en vague, sur la semaine du plan. La grille qui s'en va
+     l'efface : revenue, elle ne la rejoue pas. */
   const vague = useUi(s => s.vague);
-  const enVague = vague !== null && performance.now() - vague < VAGUE.fenetre && !mouvementReduit();
+  const enVague = (sid: string, d: string, pid: string): boolean =>
+    vague !== null && vague.semaine === week && performance.now() - vague.t < VAGUE.fenetre
+      && vague.noms.has(sid + "#" + d + "#" + pid) && !mouvementReduit();
+  useEffect(() => () => { if (useUi.getState().vague) patchUi({ vague: null }); }, []);
+  /* Ce que la grille montre à son ouverture était là d'emblée. */
+  const affichee = useRef(false);
+  useEffect(() => { affichee.current = true; }, []);
   const person = (id: string) => vue.person(id);
   const availableOn = (pid: string, d: string) => vue.availableOn(pid, d);
   const isFreeOn = (pid: string, d: string) => !vue.sites.some(s => teamOn(s, d).includes(pid));
@@ -135,12 +153,12 @@ export default function Semaine({ vue, ui, act }: { vue: Vue; ui: UiCoque; act: 
                       {crew.length ? (
                         <>
                           {shown.map(p => (
-                            <Initiales key={p.id} nom={p.name.slice(0, 2)}
-                              delai={enVague ? VAGUE.depart + i * VAGUE.parJour + r * VAGUE.parRangee : null} />
+                            <Initiales key={p.id} nom={p.name.slice(0, 2)} entre={affichee.current}
+                              delai={enVague(s.id, d, p.id) ? VAGUE.depart + i * VAGUE.parJour + r * VAGUE.parRangee : null} />
                           ))}
                           {/* À l'encre des initiales : en gris, il tombait sous le seuil AA
                               sur une case pleine (4,2:1) ou en conflit (4,0). */}
-                          {more > 0 && <i className={cn(INITIALES, ENTREE, "text-ink-2")}>+{more}</i>}
+                          {more > 0 && <Plus n={more} entre={affichee.current} />}
                         </>
                       ) : <i className="font-display text-[12px]/[1.15] font-semibold tracking-[.02em] text-line-2 not-italic">·</i>}
                     </button>

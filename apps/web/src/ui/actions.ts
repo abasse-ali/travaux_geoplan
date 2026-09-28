@@ -225,8 +225,15 @@ export function creerActions({ synchro, enHaut }: Branchements): Actions {
         const cur = v.site(s.id);
         avant[s.id] = Object.fromEntries(toute.map(d => [d, cur ? teamOn(cur, d) : []]));
       }
-      /* La grille Semaine pose ce plan en vague, jour après jour (W6). */
-      patchUi({ vague: performance.now() });
+      /* La grille Semaine pose en vague, jour après jour, les noms que ce
+         plan fait arriver (W6) — ceux-là seuls : tout nom qui naissait
+         dans la seconde suivante entrait en vague, ceux de la semaine
+         d'après comme la grille entière remontée (relecture adversariale). */
+      const noms = new Set<string>();
+      for (const [sid, jours] of Object.entries(plan))
+        for (const [d, ids] of Object.entries(jours))
+          for (const pid of ids) if (!avant[sid]?.[d]?.includes(pid)) noms.add(sid + "#" + d + "#" + pid);
+      patchUi({ vague: { t: performance.now(), semaine, noms } });
       geste({ type: "plan", semaine, plan, avant, urgence: courant().ui.urgence });
       toast(html`<b>${res.posed}</b> journées posées sur la semaine ${weekNum(semaine)}`);
     },
