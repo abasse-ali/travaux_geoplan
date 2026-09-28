@@ -39,7 +39,9 @@ async function noterLesMouvements(page: Page): Promise<void> {
     Element.prototype.animate = function (this: Element, ...args: Parameters<Element["animate"]>) {
       const a = animer.apply(this, args);
       const d = a.effect?.getComputedTiming().duration;
-      if (typeof d === "number" && d > 1) w.__mouvements.push(`script ${Math.round(d)} ms @ ${nom(this)}`);
+      const k = args[0], premiere = Array.isArray(k) ? k[0] : null;
+      const depuis = premiere && typeof premiere.height === "string" ? " depuis " + premiere.height : "";
+      if (typeof d === "number" && d > 1) w.__mouvements.push(`script ${Math.round(d)} ms${depuis} @ ${nom(this)}`);
       return a;
     };
     const css = (e: AnimationEvent | TransitionEvent, sorte: "animation" | "transition") => {
@@ -199,6 +201,9 @@ test("K3 — témoin : sans le mouvement réduit, le même tour bouge, par chaqu
     "script 240", "script 200"                     // le vol du fantôme, le vivier qui se gonfle
   ];
   expect(attendues.filter(s => !sortes.has(s)), mouvements.join("\n")).toEqual([]);
+  /* Un volet qui se déplie part de 0 : un « script 260 » d'une hauteur à
+     la même ne prouverait rien (relecture adversariale de W6). */
+  expect(mouvements.some(m => m.startsWith("script 260 ms depuis 0px")), mouvements.join("\n")).toBe(true);
 });
 
 test("K4 — une feuille se ferme par « Fermer », par Échap et par le fond", async ({ page }) => {

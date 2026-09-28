@@ -26,7 +26,11 @@ const COURBE = "cubic-bezier(.22,.9,.3,1)";
    s'ouvre (le focus, scrollIntoView) le fait défiler sur lui-même, puis
    le contenu redescend image après image à mesure qu'il grandit — sous
    le doigt (constat U26). overflow: clip rogne pareil, sans défilement ;
-   Safari le connaît depuis la version 16, hidden reste pour les autres. */
+   Safari le connaît depuis la version 16, hidden reste pour les autres.
+   Mais clip, lui, ne contient pas les marges de son contenu : celles de
+   la liste des missions traversaient le volet, et la ligne sautait de
+   8 px à la fin d'un repli (relecture adversariale). display: flow-root
+   les contient, comme le faisait hidden. */
 const ROGNE = typeof CSS !== "undefined" && CSS.supports?.("overflow", "clip") ? "clip" : "hidden";
 
 export function Repli({ ouvert, children, style, ...attributs }: {
@@ -41,12 +45,17 @@ export function Repli({ ouvert, children, style, ...attributs }: {
   if (ouvert) montre.current = children;
 
   const el = useRef<HTMLDivElement | null>(null);
-  const premier = useRef(true);
+  /* L'état déjà joué : l'effet ne joue que ce qui change. Un drapeau de
+     premier rendu ne suffisait pas : en développement, StrictMode rejoue
+     l'effet au montage, et un volet monté ouvert s'animait de sa hauteur
+     à sa hauteur (relecture adversariale). */
+  const joue = useRef(ouvert);
   /* Monté avant ce rendu : il repart de la hauteur où il en est ; monté
      à l'instant, il part de 0. */
   const etaitMonte = useRef(ouvert);
   useLayoutEffect(() => {
-    if (premier.current) { premier.current = false; return; }
+    if (joue.current === ouvert) return;
+    joue.current = ouvert;
     const n = el.current;
     if (!n) return;
     const depuis = etaitMonte.current ? n.getBoundingClientRect().height : 0;
@@ -55,17 +64,20 @@ export function Repli({ ouvert, children, style, ...attributs }: {
     const fin = () => { etaitMonte.current = false; setMonte(false); };
     if (mouvementReduit()) { if (!ouvert) fin(); return; }
     const plein = n.scrollHeight;
+    /* Replié, il garde sa fin (fill) jusqu'à quitter le DOM : sans elle, la
+       hauteur revenait à « auto » le temps que React le retire, et le
+       contenu entier reparaissait une image (relecture adversariale). */
     const anim = n.animate(
       ouvert
         ? [{ height: depuis + "px", opacity: depuis ? 1 : 0 }, { height: plein + "px", opacity: 1 }]
         : [{ height: depuis + "px", opacity: 1 }, { height: "0px", opacity: 0 }],
-      { duration: DUREE, easing: COURBE });
+      { duration: DUREE, easing: COURBE, fill: ouvert ? "none" : "forwards" });
     if (!ouvert) anim.onfinish = fin;
   }, [ouvert]);
 
   if (!monte) return null;
   return (
-    <div ref={el} style={{ ...style, overflow: ROGNE }} {...attributs}>
+    <div ref={el} style={{ ...style, overflow: ROGNE, display: "flow-root" }} {...attributs}>
       {ouvert ? children : montre.current}
     </div>
   );

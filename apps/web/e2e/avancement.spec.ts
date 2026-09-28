@@ -102,6 +102,66 @@ test("C1 — un volet qui s'ouvre ne défile pas sur lui-même quand le focus y 
   expect(defile).toBe(0);
 });
 
+/* Replie l'étape ouverte (appui sur son titre) et relève, image après
+   image, la hauteur de son volet (null : il a quitté le DOM) et celle de
+   sa ligne ; puis la rouvre, posée. */
+async function replierEtRelever(page: Page): Promise<{ hauteurs: (number | null)[]; lignes: number[] }> {
+  return page.evaluate(async () => {
+    const volet = document.querySelector<HTMLElement>("article[data-site] ul")!.parentElement!;
+    const ligne = volet.parentElement!.parentElement!;
+    const titre = ligne.querySelector<HTMLElement>("button[aria-expanded]")!;
+    const image = () => new Promise(r => requestAnimationFrame(r));
+    titre.click();
+    const hauteurs: (number | null)[] = [], lignes: number[] = [];
+    for (let i = 0; i < 40; i++) {
+      await image();
+      hauteurs.push(volet.isConnected ? Math.round(volet.getBoundingClientRect().height) : null);
+      lignes.push(Math.round(ligne.getBoundingClientRect().height));
+      if (hauteurs.filter(h => h === null).length > 2) break;
+    }
+    titre.click();
+    await new Promise(r => setTimeout(r, 450));
+    return { hauteurs, lignes };
+  });
+}
+
+test.describe("C2 — une étape qui se replie", () => {
+  /* Relecture adversariale de W6. Les missions de l'étape en cours de
+     9MD49, déjà dépliées, repliées puis rouvertes vingt fois. */
+  async function ouvrirEtapes(page: Page): Promise<void> {
+    await openLocal(page);
+    const c = carte(page, S9);
+    await c.getByRole("button", { name: /^Les 12 étapes/ }).click();
+    await expect(c.getByRole("list")).toBeVisible();
+    await page.waitForTimeout(600);
+  }
+
+  test("C2 — ne repasse pas à pleine hauteur avant de quitter l'écran", async ({ page }) => {
+    /* L'animation de repli rendait la hauteur « auto » à sa fin, le temps
+       que React retire le volet : tout son contenu reparaissait une image,
+       une fois sur quatre environ. */
+    await ouvrirEtapes(page);
+    const eclairs: string[] = [];
+    for (let n = 0; n < 20; n++) {
+      const h = (await replierEtRelever(page)).hauteurs.filter((x): x is number => x !== null);
+      eclairs.push(...h.flatMap((x, i) => (i > 1 && x > h[i - 1]! + 1 ? [`${h[i - 1]} → ${x}`] : [])));
+    }
+    expect(eclairs).toEqual([]);
+  });
+
+  test("C2 — sa ligne ne saute pas quand les missions partent", async ({ page }) => {
+    /* Rogné par overflow: clip (U26), le volet ne contenait plus les marges
+       de la liste : la ligne de l'étape sautait de 8 px à la fin du repli. */
+    await ouvrirEtapes(page);
+    const r = await replierEtRelever(page);
+    const parti = r.hauteurs.indexOf(null);
+    let dernierZero = -1;
+    for (let i = 0; i < parti; i++) if (r.hauteurs[i]! <= 1) dernierZero = i;
+    expect(parti > 0 && dernierZero >= 0, JSON.stringify(r)).toBe(true);
+    expect(Math.abs(r.lignes[parti]! - r.lignes[dernierZero]!), JSON.stringify(r)).toBeLessThanOrEqual(1);
+  });
+});
+
 test.describe("C3 — cocher les missions", () => {
   test("C3 — cocher trois missions sur quatre met la barre à 75 %, décocher la fait reculer", async ({ page }) => {
     await openLocal(page, replie);
