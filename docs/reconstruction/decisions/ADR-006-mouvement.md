@@ -50,7 +50,7 @@ C'est un écart avec la pile cible (`prompt.md` : « Tailwind, shadcn/ui, GSAP �
 
 ### Sorties
 
-Une sortie n'est animée que si elle dit quelque chose : un toast qui s'éteint, un volet qui se referme, le visage du vivier qui cède la place. Une puce qui quitte une zone ne s'efface pas : le fantôme, qui porte le geste, suffit. Un changement de jour ou de semaine remplace le contenu d'un coup ; la pastille qui coulisse et le libellé qui glisse disent le sens. Ce qui arrive après le premier affichage entre en mouvement ; ce qui était là d'emblée, non (comme `AnimatePresence initial={false}`), décidé à la naissance de l'élément pour que l'animation ne se rejoue pas.
+Une sortie n'est animée que si elle dit quelque chose : un toast qui s'éteint, un volet qui se referme, le visage du vivier qui cède la place. Une puce qui quitte une zone ne s'efface pas : le fantôme, qui porte le geste, suffit. Un changement de jour ou de semaine ne fait pas glisser la liste : ce qui reste ne bouge pas, ce qui arrive (une puce, un nom de la grille) entre ; la pastille qui coulisse et le libellé qui glisse disent le sens. Ce qui arrive après le premier affichage d'une liste entre en mouvement ; ce qui y était d'emblée, non (comme `AnimatePresence initial={false}`) — au lancement, à l'ouverture d'un onglet, du vivier ou de l'écran de connexion. C'est décidé à la naissance de l'élément (`ui/mouvement/entree.ts`), pour que l'animation ne se rejoue pas quand l'application se redessine. La vague de « Répartir » ne pose que les noms que le plan fait arriver, sur sa semaine.
 
 ### Le mouvement réduit
 

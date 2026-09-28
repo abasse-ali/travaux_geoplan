@@ -7,12 +7,14 @@ Le **prochain geste** est toujours en tête. Les entrées de workflow sont en ba
 
 ## Prochain geste
 
-W6 — le mouvement : tout est fait sauf la fin de la porte. Reprise le 2026-09-28 dans une session cloud, sur la branche `claude/happy-feynman-rpp9pt` de `abasse-ali/travaux_geoplan` (question 9) ; ses constats (V6, U23 à U26) sont corrigés, un commit chacun. Reste, dans l'ordre :
-1. la relecture adversariale de W6 (lancée) : vérifier chaque constat, corriger ce qui cède, un commit chacun ;
-2. la puce et son `will-change: transform` : une première mesure, sur une machine chargée, le dit inutile (changer de jour : 1,36 → 0,70 image perdue sans lui ; glisser, semaine : dans l'écart du contrôle A/A) ; la refaire au calme, dans les deux sens, puis le garder ou le retirer ;
-3. rejouer le filet sur les trois sources, clore l'entrée W6 (le tableau de la porte), pousser. W7 attend alors le propriétaire (question 11).
+W6 est fait, porte verte (2026-09-28) : voir la fin de l'entrée W6. Rien n'est fusionné sur `main`.
 
-Pistes : « semaine » coûte encore une vingtaine d'images au rendu des fiches, pas au mouvement ; la puce garde `will-change: transform` (utile à Framer, plus maintenant) ; le rendu des onglets de Radix à chaque jour choisi (+0,2 image, W5).
+La suite attend le propriétaire :
+1. **Quel dépôt fait foi** (question 9). Sans réponse, les commits de la porte restent sur la branche `claude/happy-feynman-rpp9pt` de `travaux_geoplan`.
+2. **W7, la bascule** (question 11) : un VPS, un domaine, et « on bascule ».
+3. En attendant, sans rien toucher à la production : rejouer le filet dans WebKit et les captures sur la machine du propriétaire (la porte n'a tourné que dans Chromium) ; puis W8, la recette de GESTES.md, peut commencer contre la source `api` en local. C'est elle qui essaiera sur l'iPhone les soupçons laissés par la relecture (le son après un relancement, un glisser quand l'application passe en arrière-plan).
+
+Pistes : « semaine » coûte encore une vingtaine d'images au rendu des fiches, pas au mouvement ; le `will-change` de la puce, sans effet mesurable, à retirer avec un contrôle des captures ; le rendu des onglets de Radix à chaque jour choisi (+0,2 image, W5).
 
 Reste de W4 pour le propriétaire : l'essai en mode avion sur l'iPhone.
 
@@ -26,7 +28,7 @@ Reste de W4 pour le propriétaire : l'essai en mode avion sur l'iPhone.
 | W3 Monorepo et API | `reconstruction/w3-api` | fait, porte verte |
 | W4 État client | `reconstruction/w4-client` | fait, porte verte (reste l'essai en mode avion sur l'iPhone) |
 | W5 Interface | `reconstruction/w5-ui` | fait, porte verte |
-| W6 Mouvement | `reconstruction/w6-mouvement`, puis `claude/happy-feynman-rpp9pt` (`travaux_geoplan`) | porte en cours |
+| W6 Mouvement | `reconstruction/w6-mouvement`, puis `claude/happy-feynman-rpp9pt` (`travaux_geoplan`) | fait, porte verte (filet joué dans Chromium ; WebKit et captures à rejouer) |
 | W7 à W9 | — | à faire |
 
 **Rien n'est fusionné sur `main`.** Voir « Questions au propriétaire », point 1.
@@ -162,6 +164,16 @@ D2 est **confirmé** par un test de propriétés (un peintre niveau 3 « débloq
 | U24 | À la souris (Chromium : bureau, Android), un geste vertical parti de la barre d'une étape sélectionnait le texte des missions ; le glisser suivant emportait la sélection (un glisser-déposer du navigateur, qui interrompt le geste) au lieu de régler l'étape. | basse | e2e (C4, Chromium) | **corrigé** `05ce2a8` |
 | U25 | Le champ de fichier de la feuille « Données » : 42 px de haut dans Chromium (44 au doigt attendus ; WebKit le dessine plus haut). | basse | e2e (L2, Chromium) | **corrigé** `b053840` |
 | U26 | Un volet (étapes, missions, note, jours de « Répartir ») était une zone de défilement (overflow: hidden) : le focus, ou scrollIntoView, qui y entrait pendant qu'il s'ouvre le faisait défiler sur lui-même, puis le contenu redescendait image après image. Sous Playwright, le titre visé descendait entre l'appui et le relâché : rien ne se dépliait (C5, C6 contre l'API, 3 fois sur 40). | basse | e2e (C1 ajouté ; scénario rejoué 40 fois) | **corrigé** `cd88fcd` (overflow: clip) |
+| U27 | **Un second doigt pendant un glisser** : posé sur une autre puce, il reprenait le glisser (Giorgi posé à la place de Nixon, qui restait estompé) ; levé n'importe où, il lâchait la puce sur la zone survolée. Le glisser ne lisait pas `pointerId`. Depuis la première version, et dans la barre d'une étape. | moyenne | relecture adversariale W6, e2e (B4) | **corrigé** `04810bc` |
+| U28 | Au clavier ou avec VoiceOver, replier ou rouvrir le vivier faisait tomber le focus sur la page (le visage qui l'avait quitte le DOM 220 ms plus tard). | basse | relecture adversariale W6, e2e (L3) | **corrigé** `d2cfddb` |
+| V7 | À la fin d'un repli, un volet repassait une image à pleine hauteur (226 à 894 px), environ une fois sur quatre : sans `fill`, l'animation rendait la hauteur « auto » le temps que React le retire. Introduit par W6. | basse | relecture adversariale W6, e2e (C2) | **corrigé** `25e1eff` |
+| V8 | Introduit par ma correction d'U26 : `overflow: clip` ne contient pas les marges du contenu ; la ligne d'une étape sautait de 8 px au début d'un dépli et à la fin d'un repli, et faisait 2 px de moins au repos. | basse | relecture adversariale W6, e2e (C2) | **corrigé** `25e1eff` (`display: flow-root`) |
+| V9 | La vague de « Répartir » débordait : pendant la seconde suivante, tout nom qui naissait entrait en vague — la semaine suivante, la grille rouverte (177 noms pour 35). Introduit par W6. | basse | relecture adversariale W6, e2e (E2) | **corrigé** `b8ac329` |
+| V10 | Des entrées jouaient au premier affichage, contre l'ADR-006 : les puces du vivier à chaque lancement et à chaque ouverture, les noms de la grille à l'ouverture de l'onglet, l'écran de connexion. Hérité de W5 (le vivier, la grille), gardé par W6. | basse | relecture adversariale W6, e2e (K6) | **corrigé** `b8ac329` |
+| V11 | Un second onglet touché pendant que le trait glisse : le trait sautait à l'onglet d'avant (260 px en une image), puis revenait. Introduit par W6. | basse | relecture adversariale W6, e2e (A4) | **corrigé** `e3b66a0` |
+| V12 | Revenu par « Auj. » d'une semaine plus loin, le libellé entrait par la droite, comme si l'on avançait. | basse | relecture adversariale W6, e2e (A3) | **corrigé** `e3b66a0` |
+| V13 | Au lancement connecté, la marque d'attente s'éteignait puis se rallumait (deux attentes à la suite). Préexistant. | basse | relecture adversariale W6, e2e (K6, sources connectées) | **corrigé** `b8ac329` |
+| V14 | En développement seulement (StrictMode), un volet monté ouvert s'animait de sa hauteur à sa hauteur ; le témoin de K3 pouvait s'en contenter. | négligeable | relecture adversariale W6, e2e (E1, témoin K3) | **corrigé** `25e1eff` |
 
 ---
 
@@ -485,7 +497,7 @@ Une erreur à moi, rattrapée par le filet de la porte : ma correction d'U21 fai
 
 **Prochain geste.** W6.
 
-### W6 — Le mouvement (en cours, 2026-09-28)
+### W6 — Le mouvement (2026-09-28)
 
 Branche `reconstruction/w6-mouvement`, partie de W5. Les règles sont dans l'ADR-006.
 
@@ -628,3 +640,72 @@ Elle se paie un peu : entre une demi-image et une image et demie par « Applique
 **Three.js : aucun usage honnête, donc rien.** Geoplan montre des équipes posées sur des jours et des chantiers réduits à un code, une adresse et douze étapes : aucune de ces données n'a de profondeur, et rien de ce que Geoffrey fait au doigt n'y gagnerait. Une vue 3D d'un chantier, un vivier en volume, des puces qui tombent en relief seraient des décors, qui coûteraient plus de 150 ko et des images perdues à chaque geste. La mission le demandait dans ce cas : le dire, et ne rien mettre. Rien n'est ajouté au paquet, initial ou à la demande.
 
 Et une erreur à moi, dite : après U22, `verifier-css` m'a répondu ✓ sur la construction de la veille (il lit `apps/web/dist`, que je n'avais pas reconstruit). Le résultat n'aurait pas changé, mais la vérification n'avait pas eu lieu. L'outil refuse désormais une construction plus ancienne que les sources.
+
+**La porte (2026-09-28, reprise dans une autre session).** La session précédente s'est arrêtée à la limite d'usage de la semaine, au milieu de cette entrée. Reprise sur une autre machine, à partir du dépôt `abasse-ali/travaux_geoplan` : une copie de la copie de travail de W6, en un seul commit (« first commit »), sans l'historique. Les empreintes citées plus haut sont celles du dépôt d'origine ; celles de la porte, ci-dessous, sont sur la branche `claude/happy-feynman-rpp9pt` de `travaux_geoplan` (question 9). L'état copié a d'abord été vérifié : types, 372 tests du domaine et du client (et les 3 échecs attendus), 221 de l'API, construction.
+
+La machine n'est pas celle de W0 à W6 :
+
+| | W0 à W6 | La porte |
+|---|---|---|
+| Système | Windows | Linux, 4 cœurs, 16 Go |
+| Node | 24 | 22.22 (celui de Netlify) |
+| Navigateur du filet | WebKit, format iPhone 15 | Chromium 141 préinstallé, même format (écran, toucher, agent) ; pas de WebKit ici |
+| Docker | Docker Desktop | démon lancé dans la session ; Docker Hub refusait (429) : MySQL 8.4, Redis 7.4 et Ryuk tirés du miroir de Google (`mirror.gcr.io`), mêmes images officielles |
+
+Le filet se joue désormais aussi dans Chromium, par deux variables (`GEOPLAN_E2E_NAVIGATEUR=chromium`, `GEOPLAN_E2E_CHROMIUM` pour un Chromium déjà installé ; `630a59a`) ; WebKit reste le défaut. Les captures de référence (WebKit, Windows) ne se comparent pas sous Linux : pas jouées ici.
+
+**Ce que Chromium et les deux autres sources ont trouvé.** Joué une première fois tel quel : source locale, 2 échecs ; supabase, 6 ; api, 6. Cinq constats, un commit chacun :
+- **V6** (K6 et trois L2, sources supabase et api) : la coque dessine d'abord l'attente quand l'appareil n'a rien ; le libellé de la semaine et « Auj. » naissaient au rendu suivant, après le « premier rendu », et entraient en glissant. V5 n'était corrigé qu'à moitié : la source locale lit ses données avant le premier rendu, et c'est la seule que le filet avait rejouée. Le premier rendu est désormais le premier qui montre quelque chose (`02c7320`).
+- **U23** (C4) : un glisser sur la barre interrompu par le système laissait l'aperçu à l'écran (50 % affichés, 75 enregistrés). Préexistant. L'annulation efface l'aperçu (`5119290`).
+- **U24** (C4, Chromium seulement) : à la souris, un geste vertical parti de la barre sélectionnait le texte des missions, et le glisser suivant emportait la sélection au lieu de régler l'étape. La barre n'offre plus de sélection (`05ce2a8`).
+- **U25** (L2, Chromium seulement) : le champ de fichier de la feuille Données, 42 px de haut. 44 au moins, sans effet dans WebKit (`b053840`).
+- **U26** (C5, C6 contre l'API, 3 fois sur 40) : un volet était une zone de défilement (`overflow: hidden`) ; ce qu'on y faisait paraître pendant qu'il s'ouvre le faisait défiler sur lui-même, puis le contenu redescendait sous le doigt. Trouvé en notant les événements (appui sur « Sols & plinthes », relâché sur « Jointeur », au même point). `overflow: clip` (`cd88fcd`) ; le scénario rejoué 40 fois : 3 échecs avant, 0 après.
+
+Et deux commentaires qui donnaient encore Framer Motion pour raison, au présent (`d82b18f`, paquets identiques à l'octet).
+
+**Le mouvement réduit, vérifié d'ensemble** (`9894773`). Un test note tout ce qui bouge pendant un tour de chaque geste qui bougeait — jour, semaine, « Auj. », onglets, vivier replié puis rouvert, étapes, mission, poser, retirer, « Composer », « Répartir » — : toute animation ou transition CSS de plus de 1 ms ou à délai, toute animation de script. Sous le mouvement réduit : rien. Témoin, le même tour sans : les quatorze mécanismes attendus (huit animations CSS nommées, la transition de la pastille, cinq animations de script ; le message du commit en annonce neuf CSS : c'est huit), dont un volet qui part de 0 (durci après la relecture). Sans la garde de `forme.ts`, il échoue (deux « script 400 ms @ #vivier »).
+
+**Relecture adversariale.** Un agent distinct, dans sa propre copie, a essayé de casser W6 et les corrections ci-dessus : dix constats prouvés, chacun par un test qui échouait. Je les ai rejoués sur le code d'avant (quinze preuves qui échouent), puis corrigés ; chaque correction a son test permanent, vérifié en retirant la correction.
+
+| Constat | Correction |
+|---|---|
+| **Un second doigt** pendant un glisser le reprenait ou le lâchait : une affectation fausse (U27, moyenne ; depuis la première version) | le glisser et la barre suivent le doigt qui les a commencés ; un doigt principal qui se pose sur un glisser dont la fin s'est perdue l'abandonne (`04810bc`) |
+| Un volet repassait une image à pleine hauteur à la fin d'un repli (V7, W6) | l'animation de repli garde sa fin jusqu'au départ du volet (`25e1eff`) |
+| **Ma correction d'U26 faisait sauter de 8 px** la ligne d'une étape, et la raccourcissait de 2 px au repos (V8) | `display: flow-root` contient les marges, comme `hidden` ; j'avais écrit « aucun changement de dessin » : c'était faux (`25e1eff`) |
+| En développement, un volet monté ouvert s'animait, et le témoin de K3 s'en contentait (V14) | l'effet se fie à l'état déjà joué ; le témoin exige un volet qui part de 0 (`25e1eff`) |
+| Des entrées jouaient au premier affichage : le vivier au lancement et à l'ouverture, la grille Semaine, l'écran de connexion (V10) ; K6 ne regardait que la coque | décidées à la naissance, comme les puces des chantiers ; K6 regarde toutes les entrées, avec ses témoins (`b8ac329`) |
+| La vague de « Répartir » débordait sur la semaine suivante et sur la grille rouverte (V9, W6) | elle ne pose que les noms que le plan fait arriver, sur sa semaine ; la grille qui s'en va l'efface (`b8ac329`) |
+| La marque d'attente se rallumait au lancement connecté (V13) | la seconde attente reprend l'apparition là où la première l'a laissée (`b8ac329`) |
+| Le trait sous l'onglet sautait à l'onglet d'avant quand on en touchait un autre en chemin (V11, W6) | le nouveau glissement part d'où l'ancien en était (`e3b66a0`) |
+| « Auj. » faisait entrer le libellé dans le mauvais sens (V12) | « Auj. » donne son sens (`e3b66a0`) |
+| Au clavier, replier ou rouvrir le vivier faisait tomber le focus sur la page (U28) | le focus passe au contrôle qui défait le geste (`d2cfddb`) |
+
+Ce qui a tenu : le mouvement réduit, jusque dans la page compagnon et la connexion ; le vol du fantôme (changement de jour, d'onglet ou second glisser en plein vol, dépôt dans sa propre zone, copie en urgence : rien de collé) ; le vivier qui se gonfle (interrompu, replié en vol, allers-retours) ; le son (aucun contexte audio avant un geste, aucune note pour un dépôt sans effet ni pour la synchronisation) ; V6 sur les trois sources ; aucun écouteur qui fuit après les gestes de barre ou de puce ; les cibles au doigt et l'anneau du focus, `clip` compris ; `dispo.html` à 59,7 ko.
+
+Soupçons non prouvés, à essayer sur l'iPhone en W8 : le son après un relancement (le contexte audio naît dans le `pointerup` d'un toucher, que WebKit compte peut-être comme un geste, peut-être pas) ; l'application passée en arrière-plan en plein glisser, si Safari n'envoie pas `pointercancel` (la correction d'U27 l'abandonne au toucher suivant) ; le taux de V7 sous WebKit. Et deux, antérieurs à W6, non mesurés : `barGrow` et `tickIn` se rejoueraient si une fiche change de place dans la liste ; le fond d'une feuille qui se ferme prendrait encore le doigt pendant 500 ms (vaul, W5).
+
+**La puce et son `will-change: transform`** (piste laissée par W6 : utile à Framer, plus maintenant). Mesuré sur une machine au calme, dans les deux sens (le retrait en A, puis en B), avec un contrôle A/A, 50 gestes par version :
+
+| Geste | Avec | Sans | A/A (écart) |
+|---|---|---|---|
+| jour | 0,32 · 0,44 | 0,32 · 0,46 | 0,08 |
+| glisser | 0,80 · 0,86 | 0,80 · 0,86 | 0,18 |
+| semaine | 1,78 · 1,50 | 1,52 · 2,18 | 0,22 |
+| vivier | 0,06 · 0,18 | 0,26 · 0,06 | 0,04 |
+
+(Chaque case : la série où la version était en A, puis celle où elle était en B.) Aucune différence qui dépasse le bruit, ni ne tienne quand on inverse l'ordre ; la seule série « sans » qui perde (semaine, 2,18) tient à une image de 567 ms. Une première mesure, faite pendant que la relecture chargeait la machine, donnait « jour » à 1,36 contre 0,70 : l'indicateur, pas le code. **Gardé** : sans effet mesurable, le retirer pourrait changer le rendu du texte des puces dans les captures WebKit, que je ne peux pas comparer ici. À retirer avec un contrôle des captures, si l'on veut alléger les calques.
+
+Pour mesurer ici, l'outil (`npm run images-perdues`) lit `GEOPLAN_E2E_CHROMIUM`, et il lui faut le « headless shell » de Chromium : le Chromium complet, sans écran, met en veille l'onglet qui n'est pas au premier plan, et une version ne dessinait plus rien (0 image perdue d'un côté, 383 par glisser de l'autre).
+
+| Critère | Résultat |
+|---|---|
+| `prefers-reduced-motion` coupe tout le décoratif | le tour : rien ne bouge, sur les trois sources ; les tests K3 de chaque mouvement ; la relecture n'a rien trouvé qui bouge encore |
+| Chaque animation ajoutée a sa mesure A/B | le lâcher, le vivier qui se gonfle, la vague (plus haut) ; le son n'anime rien ; la porte n'ajoute aucune animation, en retire plusieurs (V6, V10, V13) et en répare d'autres sans changer leur coût |
+| W1 vert | bout en bout, dans Chromium, chaque source jouée seule : locale 156 passés, 4 sautés ; supabase 136 passés, 8 sautés ; api 144 passés, 8 sautés (au départ de la porte : 134, 111 et 119 passés, avec 2, 6 et 6 échecs ; 20 tests ajoutés depuis, dont un qui ne tourne qu'en source locale). Unitaires : domaine et client 372, et les 3 échecs attendus (D2, D5, D6) ; API contre de vrais MySQL et Redis : 221. Types, construction, `verifier-css` |
+| Relecture adversariale | dix constats prouvés, tous corrigés, chacun avec son test (ci-dessus) |
+| Rien pour Three.js | rien, ni au démarrage ni à la demande |
+| Poids | `index.html` 113,2 ko (112,4 avant la porte ; +0,8 ko, les corrections), `dispo.html` 59,7 ko, inchangé (38 % de sa référence) |
+
+**Écarts au plan, et pourquoi.**
+- Le filet a tourné dans Chromium, pas dans WebKit : à rejouer sur la machine du propriétaire, avec les captures (`npm run test:e2e`, `npm run test:captures`). J'attends zéro image changée : au repos, la porte ne change pas le dessin (un volet rogne par `clip` mais contient ses marges comme avec `hidden`, le champ de fichier dépasse déjà 44 px dans WebKit, les entrées retirées ne jouaient qu'en chemin, et les captures attendent la fin des animations).
+- Mes propres erreurs, dites : U26 annoncé « sans changement de dessin » alors qu'il en changeait un (V8, rattrapé par la relecture) ; un test de V9 qui ne pouvait pas échouer (la grille rouverte trop tard, hors de la fenêtre de la vague), réécrit pour agir dans la fenêtre, et qui exige de l'être ; le test du trait (V11) mesurait le plus grand écart d'une image à l'autre, que la charge faisait dépasser à son témoin : il mesure la continuité au toucher (`f03a3f7`) ; une première mesure du `will-change` faite sur une machine chargée ; et une vérification lancée pendant le filet complet, dans le même dossier de résultats : Playwright l'a vidé en démarrant, et sept tests de la source supabase ont perdu leurs traces (ENOENT) — rejouée seule ensuite (tableau ci-dessus). Deux suites Playwright ne tournent jamais ensemble dans la même copie.

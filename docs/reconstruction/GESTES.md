@@ -19,8 +19,8 @@ Les libellés entre guillemets sont les textes exacts de l'interface : ils serve
 |---|---|---|---|
 | A1 | Toucher un jour de la bande des jours (`.daybar [role=tab]`) | Ce jour devient le jour affiché. Tout ce qui s'affecte ensuite s'affecte à CE jour. La pastille glisse sous le jour choisi. | e2e |
 | A2 | « Semaine précédente » / « Semaine suivante » | La semaine change de ±7 jours, le jour de la semaine est conservé. Le libellé « Sem. N · plage » passe à l'orange hors de la semaine courante. Les flèches ne bougent jamais : deux appuis rapides avancent de deux semaines (en W4, « Auj. » prenait la place de la flèche et le second appui ramenait à aujourd'hui ; corrigé en W5). | e2e |
-| A3 | « Auj. » | N'apparaît que hors du jour courant, entre le libellé et la flèche « Semaine suivante ». Ramène à la semaine et au jour d'aujourd'hui. | e2e |
-| A4 | Onglets « Chantiers », « Semaine », « Équipe » | Change d'écran, remonte en haut. L'onglet est retenu d'un lancement à l'autre (`geoplan.ui.v3`). La semaine et le jour, eux, repartent d'aujourd'hui. | e2e |
+| A3 | « Auj. » | N'apparaît que hors du jour courant, entre le libellé et la flèche « Semaine suivante ». Ramène à la semaine et au jour d'aujourd'hui ; le libellé entre dans le sens du retour (W6). | e2e |
+| A4 | Onglets « Chantiers », « Semaine », « Équipe » | Change d'écran, remonte en haut. L'onglet est retenu d'un lancement à l'autre (`geoplan.ui.v3`). Le trait glisse sous l'onglet choisi ; un autre onglet touché en chemin, il repart d'où il en est (W6). La semaine et le jour, eux, repartent d'aujourd'hui. | e2e |
 | A5 | Toucher une case ou un en-tête de jour dans l'onglet Semaine | Bascule sur l'onglet Chantiers, à ce jour-là. | e2e |
 
 ## B. Affecter les compagnons
@@ -30,7 +30,7 @@ Les libellés entre guillemets sont les textes exacts de l'interface : ils serve
 | B1 | Appui long (190 ms) ou glisser de plus de 8 px sur une puce du vivier, puis lâcher sur la zone d'un chantier | Le compagnon est posé sur ce chantier ce jour-là. Toast « {nom} sur **CODE** · {jour} {date} ». La puce quitte le vivier. Retour haptique là où `vibrate` existe. Au lâcher, le fantôme vient se poser sur la puce, qui paraît à son arrivée (W6). | e2e |
 | B2 | Glisser une puce d'un chantier A vers un chantier B, hors urgence | Le compagnon quitte A et rejoint B ce jour-là. Toast « {nom} : **A** → **B** ». | e2e |
 | B3 | Glisser une puce posée vers le vivier | Le compagnon est retiré de ce jour, sur tous les chantiers. Toast « {nom} retiré de **CODE** ». Sous la puce, le vivier se gonfle un peu depuis son coin, et reprend sa forme quand elle y tombe (W6). | e2e |
-| B4 | Lâcher une puce hors de toute cible | Rien ne change. C'est la seule façon d'annuler un glisser. Un glisser interrompu par le système (appel, notification, centre de contrôle) ne pose rien non plus (U6, corrigé en W6). Le fantôme revient à la puce, qui reprend sa couleur à son retour (W6). | e2e |
+| B4 | Lâcher une puce hors de toute cible | Rien ne change. C'est la seule façon d'annuler un glisser. Un glisser interrompu par le système (appel, notification, centre de contrôle) ne pose rien non plus (U6, corrigé en W6). Le fantôme revient à la puce, qui reprend sa couleur à son retour (W6). Un second doigt posé pendant le geste ne le reprend pas et ne le lâche pas (corrigé en W6, constat U27). | e2e |
 | B5 | Poser quelqu'un qui s'est déclaré absent ce jour-là | Le placement est accepté. 2,9 s plus tard, toast « Attention : {nom} s'est déclaré absent ce jour-là ». Sa pastille du jour passe en fuchsia. | e2e |
 | B6 | Toucher une puce posée (sans glisser), ou l'activer au clavier (Entrée, Espace ; depuis W5) | Ouvre la fiche du compagnon avec « Jours sur {CODE} · sem. N » : un sélecteur de 7 jours, « Ses jours dispo », « Aucun ». Chaque bascule pose ou retire ce jour sur ce chantier. | e2e |
 | B7 | Toucher une puce du vivier | Ouvre la fiche du compagnon sans la section « Jours sur… ». | e2e |
@@ -41,7 +41,7 @@ Les libellés entre guillemets sont les textes exacts de l'interface : ils serve
 | B12 | Interrupteur « Urgence » (vivier déplié) | Toast « **Mode urgence** — un compagnon peut être posé sur deux chantiers le même jour ». Glisser de A vers B **copie** la puce au lieu de la déplacer ; la zone survolée passe en fuchsia. L'état est retenu d'un lancement à l'autre. Le désactiver ne retire pas les doublons existants. | e2e |
 | B13 | Hors urgence, toute écriture (glisser, fiche, Composer, Répartir, « Ses jours dispo ») | Un compagnon n'est jamais sur deux chantiers le même jour : il est retiré des autres. | e2e + unit |
 | B14 | Le vivier | Ne montre que les compagnons disponibles ET libres ce jour-là, avec leur nombre de jours. « Personne de libre {jour}. » s'il est vide. N'existe que sur l'onglet Chantiers. | e2e |
-| B15 | Pastille du vivier replié (« Ouvrir le vivier — N disponible ») | Le déplie à la hauteur de son contenu. « Réduire le vivier » ou la poignée le replie. L'état est retenu. Replié ou déplié, il reçoit une puce qu'on lui lâche dessus. | e2e |
+| B15 | Pastille du vivier replié (« Ouvrir le vivier — N disponible ») | Le déplie à la hauteur de son contenu. « Réduire le vivier » ou la poignée le replie. L'état est retenu. Au clavier, le focus passe au contrôle qui défait le geste (W6). Replié ou déplié, il reçoit une puce qu'on lui lâche dessus. | e2e |
 
 ## C. Suivre l'avancement d'un chantier
 
@@ -69,7 +69,7 @@ Les libellés entre guillemets sont les textes exacts de l'interface : ils serve
 | Réf. | Geste | Résultat attendu | Test |
 |---|---|---|---|
 | E1 | Onglet Semaine → « Répartir toute l'équipe sur la semaine » | Feuille « Répartir la semaine » : « N journées réparties sur M chantiers », « Ce que personne ne couvre » (6 au plus), sept jours dépliables avec chaque nom et sa raison, « Non affectés : … ». Chaque nom porte sa raison, y compris après les échanges (D1, corrigé en W1). | e2e + unit |
-| E2 | « Appliquer ce plan » | Remplace le plan de la semaine sur les chantiers visés, y compris en vidant des jours. Hors urgence, retire les personnes des autres chantiers. Toast « **N** journées posées sur la semaine N ». Les noms qui arrivent dans la grille Semaine s'y posent en vague, jour après jour (W6 ; d'un coup sous le mouvement réduit). | e2e |
+| E2 | « Appliquer ce plan » | Remplace le plan de la semaine sur les chantiers visés, y compris en vidant des jours. Hors urgence, retire les personnes des autres chantiers. Toast « **N** journées posées sur la semaine N ». Les noms que le plan fait arriver dans la grille Semaine s'y posent en vague, jour après jour (W6 ; d'un coup sous le mouvement réduit) — ceux-là seuls, pas ceux d'une autre semaine, ni la grille rouverte. | e2e |
 | E3 | Aucun chantier à pourvoir | « Aucun chantier actif à pourvoir cette semaine. » | e2e |
 | E4 | La grille Semaine | Chantiers × 7 jours, jusqu'à 3 initiales puis « +N », cases en fuchsia s'il y a un conflit, ligne « Libres » par jour, « Aucun chantier sur cette semaine. » sinon. | e2e |
 
