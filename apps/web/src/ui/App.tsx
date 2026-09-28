@@ -253,14 +253,28 @@ const BarreOnglets = memo(function BarreOnglets({ tab, choisir }: { tab: Tab; ch
      trait n'a pas de transform : son dessin ne change pas. */
   const trait = useRef<HTMLSpanElement | null>(null);
   const avant = useRef(tab);
+  /* Le glissement en cours. Un autre onglet touché en chemin le reprend
+     d'où il en est : le trait sautait à l'onglet d'avant, puis revenait
+     (relecture adversariale de W6). L'ancien trait a quitté le DOM, mais
+     son animation court encore : elle dit où il en était. */
+  const glisse = useRef<{ anim: Animation; ecart: number } | null>(null);
   useLayoutEffect(() => {
     const de = ONGLETS.findIndex(([id]) => id === avant.current), a = ONGLETS.findIndex(([id]) => id === tab);
     avant.current = tab;
     const el = trait.current, nav = el?.closest("nav");
     if (!el || !nav || de === a || mouvementReduit()) return;
-    const ecart = (de - a) * nav.getBoundingClientRect().width / ONGLETS.length;
-    el.animate([{ transform: "translateX(" + ecart + "px)" }, { transform: "none" }],
-      { duration: 280, easing: "cubic-bezier(.25,.8,.25,1)" });
+    let ecart = (de - a) * nav.getBoundingClientRect().width / ONGLETS.length;
+    const g = glisse.current;
+    if (g && g.anim.playState === "running") {
+      const fait = g.anim.effect?.getComputedTiming().progress;
+      if (typeof fait === "number") ecart += g.ecart * (1 - fait);
+      g.anim.cancel();
+    }
+    glisse.current = {
+      anim: el.animate([{ transform: "translateX(" + ecart + "px)" }, { transform: "none" }],
+        { duration: 280, easing: "cubic-bezier(.25,.8,.25,1)" }),
+      ecart
+    };
   }, [tab]);
 
   return (
@@ -431,7 +445,13 @@ export default function App(){
               adversariale de W5, test A2). */}
           {(week !== now || ui.day !== dayIndex(todayISO())) && (
             <BoutonAuj entre={!premierRendu.current}
-              onClick={() => patchUi({ week: now, day: dayIndex(todayISO()) })} />
+              onClick={() => {
+                /* Revenir à aujourd'hui a un sens, lui aussi : le libellé
+                   entrait comme la dernière flèche touchée (relecture
+                   adversariale de W6). */
+                sensSem.current = now < week ? -1 : 1;
+                patchUi({ week: now, day: dayIndex(todayISO()) });
+              }} />
           )}
           <button className={FLECHE} aria-label="Semaine suivante"
             onClick={() => { sensSem.current = 1; patchUi({ week: addDays(week, 7) }); }}>

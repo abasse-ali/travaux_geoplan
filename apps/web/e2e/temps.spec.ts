@@ -98,6 +98,60 @@ test("A3 — « Auj. » n'apparaît qu'hors du jour courant et y ramène", async
   await expect(auj).toHaveCount(0);
 });
 
+test("A3 — revenu par « Auj. », le libellé entre dans le sens du retour", async ({ page }) => {
+  /* Relecture adversariale de W6 : « Auj. » ne donnait pas son sens, et le
+     libellé entrait comme la dernière flèche touchée. Témoin : la flèche
+     « Semaine précédente » le fait entrer par la gauche. */
+  const libelle = page.locator("[data-semaine] b");
+  await openLocal(page);
+  await page.getByRole("button", { name: "Semaine suivante" }).click();
+  await page.getByRole("button", { name: "Semaine suivante" }).click();
+  await expect(page.locator("[data-semaine]")).toHaveText(/^Sem\. 40/);
+  await page.getByRole("button", { name: "Auj." }).click();
+  await expect(page.locator("[data-semaine]")).toHaveText(/^Sem\. 38/);
+  expect(await libelle.evaluate(el => getComputedStyle(el).animationName)).toBe("semaine-precedente");
+  await page.getByRole("button", { name: "Semaine précédente" }).click();
+  await page.getByRole("button", { name: "Auj." }).click();
+  expect(await libelle.evaluate(el => getComputedStyle(el).animationName)).toBe("semaine-suivante");
+});
+
+test("A4 — un autre onglet touché en chemin : le trait repart d'où il en est", async ({ page }) => {
+  /* Relecture adversariale de W6 : le trait sous l'onglet repartait de
+     l'onglet d'avant, sautait de 260 px, puis revenait. On relève son
+     milieu à chaque image ; témoin, un seul changement d'onglet, le plus
+     long (Chantiers → Équipe). */
+  const plusGrandSaut = (vers: number[], apres: number) => page.evaluate(async ({ vers, apres }) => {
+    const onglets = [...document.querySelectorAll<HTMLElement>('[aria-label="Onglets"] [role=tab]')];
+    const milieu = () => {
+      const t = document.querySelector<HTMLElement>('[aria-label="Onglets"] [role=tab][aria-selected=true] > span.absolute');
+      if (!t) return null;
+      const b = t.getBoundingClientRect();
+      return b.x + b.width / 2;
+    };
+    const image = () => new Promise(r => requestAnimationFrame(r));
+    const xs: number[] = [];
+    const t0 = performance.now();
+    let prochain = 0, dernier = -Infinity;
+    for (let i = 0; i < 40; i++) {
+      const t = performance.now() - t0;
+      if (prochain < vers.length && (prochain === 0 || t - dernier >= apres)) {
+        onglets[vers[prochain]!]!.click();
+        dernier = t;
+        prochain++;
+      }
+      await image();
+      const x = milieu();
+      if (x !== null) xs.push(x);
+    }
+    return Math.max(...xs.slice(1).map((x, i) => Math.abs(x - xs[i]!)));
+  }, { vers, apres });
+  await openLocal(page);
+  expect(await plusGrandSaut([2], 0)).toBeLessThanOrEqual(60);
+  await onglet(page, "Chantiers").click();
+  await page.waitForTimeout(400);
+  expect(await plusGrandSaut([2, 1], 90)).toBeLessThanOrEqual(60);
+});
+
 test("A4 — les onglets changent d'écran et remontent en haut ; l'onglet se retient, pas le jour", async ({ page }) => {
   await openLocal(page);
   const liste = page.locator("main");
