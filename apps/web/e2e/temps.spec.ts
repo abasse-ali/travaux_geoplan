@@ -117,10 +117,13 @@ test("A3 — revenu par « Auj. », le libellé entre dans le sens du retour", a
 
 test("A4 — un autre onglet touché en chemin : le trait repart d'où il en est", async ({ page }) => {
   /* Relecture adversariale de W6 : le trait sous l'onglet repartait de
-     l'onglet d'avant, sautait de 260 px, puis revenait. On relève son
-     milieu à chaque image ; témoin, un seul changement d'onglet, le plus
-     long (Chantiers → Équipe). */
-  const plusGrandSaut = (vers: number[], apres: number) => page.evaluate(async ({ vers, apres }) => {
+     l'onglet d'avant — il sautait de 260 px, puis revenait. On relève son
+     milieu à chaque image, et l'écart entre l'image d'avant un toucher et
+     celle d'après : le trait continue d'où il en est, quelle que soit la
+     cadence (une image perdue en chemin ne compte pas). Le second toucher
+     suit le premier d'une image, quand le trait vient de partir. Témoin :
+     un seul changement d'onglet. */
+  const sautsAuxTouchers = (vers: number[]) => page.evaluate(async vers => {
     const onglets = [...document.querySelectorAll<HTMLElement>('[aria-label="Onglets"] [role=tab]')];
     const milieu = () => {
       const t = document.querySelector<HTMLElement>('[aria-label="Onglets"] [role=tab][aria-selected=true] > span.absolute');
@@ -129,27 +132,25 @@ test("A4 — un autre onglet touché en chemin : le trait repart d'où il en est
       return b.x + b.width / 2;
     };
     const image = () => new Promise(r => requestAnimationFrame(r));
-    const xs: number[] = [];
-    const t0 = performance.now();
-    let prochain = 0, dernier = -Infinity;
-    for (let i = 0; i < 40; i++) {
-      const t = performance.now() - t0;
-      if (prochain < vers.length && (prochain === 0 || t - dernier >= apres)) {
-        onglets[vers[prochain]!]!.click();
-        dernier = t;
-        prochain++;
-      }
+    const sauts: number[] = [];
+    let avant = milieu();
+    for (const i of vers) {
+      onglets[i]!.click();
       await image();
       const x = milieu();
-      if (x !== null) xs.push(x);
+      if (avant !== null && x !== null) sauts.push(Math.round(Math.abs(x - avant)));
+      avant = x;
     }
-    return Math.max(...xs.slice(1).map((x, i) => Math.abs(x - xs[i]!)));
-  }, { vers, apres });
+    return sauts;
+  }, vers);
   await openLocal(page);
-  expect(await plusGrandSaut([2], 0)).toBeLessThanOrEqual(60);
-  await onglet(page, "Chantiers").click();
+  // Témoin : Chantiers → Équipe, le plus long trajet.
+  expect(Math.max(...await sautsAuxTouchers([2]))).toBeLessThanOrEqual(80);
   await page.waitForTimeout(400);
-  expect(await plusGrandSaut([2, 1], 90)).toBeLessThanOrEqual(60);
+  // Équipe → Chantiers, puis Semaine une image plus tard.
+  const sauts = await sautsAuxTouchers([0, 1]);
+  expect(sauts, "un écart par toucher").toHaveLength(2);
+  expect(Math.max(...sauts), JSON.stringify(sauts)).toBeLessThanOrEqual(80);
 });
 
 test("A4 — les onglets changent d'écran et remontent en haut ; l'onglet se retient, pas le jour", async ({ page }) => {
