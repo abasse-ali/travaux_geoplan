@@ -32,11 +32,25 @@ const PORT_API = PORT + 2;
 const SOURCE = process.env.GEOPLAN_E2E_SOURCE === "api" ? "api"
   : process.env.GEOPLAN_E2E_SOURCE === "supabase" ? "supabase" : "local";
 
+/* Le moteur de l'iPhone, WebKit. Là où il manque (une machine Linux
+   sans ses bibliothèques, une session dans le nuage),
+   GEOPLAN_E2E_NAVIGATEUR=chromium joue le filet dans Chromium, au même
+   format ; GEOPLAN_E2E_CHROMIUM désigne un Chromium déjà installé, si ce
+   n'est pas celui que Playwright attend. Les captures de référence ne se
+   comparent que dans WebKit, sous Windows. */
+const navigateur = process.env.GEOPLAN_E2E_NAVIGATEUR === "chromium"
+  ? {
+      browserName: "chromium" as const, defaultBrowserType: "chromium" as const,
+      ...(process.env.GEOPLAN_E2E_CHROMIUM && { launchOptions: { executablePath: process.env.GEOPLAN_E2E_CHROMIUM } })
+    }
+  : { browserName: "webkit" as const };
+
 const iphone = devices["iPhone 15"];
 const commun = {
   locale: "fr-FR",
   timezoneId: "Europe/Paris",
-  trace: "retain-on-failure" as const
+  trace: "retain-on-failure" as const,
+  ...navigateur
 };
 
 const parSource: Record<typeof SOURCE, Pick<PlaywrightTestConfig, "projects" | "webServer" | "workers">> = {
@@ -49,12 +63,12 @@ const parSource: Record<typeof SOURCE, Pick<PlaywrightTestConfig, "projects" | "
       {
         name: "iphone",
         testIgnore: /\.(pwa|api|supabase)\.spec\.ts$|captures\.spec\.ts$/,
-        use: { ...iphone, ...commun, browserName: "webkit", baseURL: DEV, serviceWorkers: "block" }
+        use: { ...iphone, ...commun, baseURL: DEV, serviceWorkers: "block" }
       },
       {
         name: "pwa",
         testMatch: /\.pwa\.spec\.ts$/,
-        use: { ...iphone, ...commun, browserName: "webkit", baseURL: PROD, serviceWorkers: "allow" }
+        use: { ...iphone, ...commun, baseURL: PROD, serviceWorkers: "allow" }
       },
       {
         /* Les captures de référence de W5 : à part, parce qu'elles
@@ -62,7 +76,7 @@ const parSource: Record<typeof SOURCE, Pick<PlaywrightTestConfig, "projects" | "
            ce que chaque différence soit expliquée. npm run test:captures */
         name: "captures",
         testMatch: /captures\.spec\.ts$/,
-        use: { ...iphone, ...commun, browserName: "webkit", baseURL: DEV, serviceWorkers: "block" }
+        use: { ...iphone, ...commun, baseURL: DEV, serviceWorkers: "block" }
       }
     ],
     webServer: [
@@ -90,7 +104,7 @@ const parSource: Record<typeof SOURCE, Pick<PlaywrightTestConfig, "projects" | "
         /* L'écran de connexion et la page compagnon de Supabase ont déjà
            leurs tests, joués par la source locale avec leur propre faux. */
         testIgnore: /\.(pwa|api)\.spec\.ts$|connexion\.spec\.ts$|dispo\.spec\.ts$|captures\.spec\.ts$/,
-        use: { ...iphone, ...commun, browserName: "webkit", baseURL: DEV, serviceWorkers: "block" }
+        use: { ...iphone, ...commun, baseURL: DEV, serviceWorkers: "block" }
       }
     ],
     webServer: [
@@ -110,7 +124,7 @@ const parSource: Record<typeof SOURCE, Pick<PlaywrightTestConfig, "projects" | "
         /* La page compagnon et l'écran de connexion Supabase ont leurs
            propres tests pour l'API (*.api.spec.ts). */
         testIgnore: /\.(pwa|supabase)\.spec\.ts$|connexion\.spec\.ts$|dispo\.spec\.ts$|captures\.spec\.ts$/,
-        use: { ...iphone, ...commun, browserName: "webkit", baseURL: DEV, serviceWorkers: "block" }
+        use: { ...iphone, ...commun, baseURL: DEV, serviceWorkers: "block" }
       }
     ],
     webServer: [

@@ -301,7 +301,14 @@ async function mesurer(page: Page, geste: string, i: number): Promise<{ perdues:
    pouvaient partager un fil d'exécution, et le travail de l'une se
    compter dans les images de l'autre. */
 const serveurs = [await servir(DOSSIERS.A, "127.0.0.1", 5311), await servir(DOSSIERS.B, "127.0.0.2", 5312)];
-const navigateur = await chromium.launch();
+/* GEOPLAN_E2E_CHROMIUM : un Chromium déjà installé, si ce n'est pas celui
+   que Playwright attend (comme pour le filet, playwright.config.ts). Pour
+   la mesure, son « headless shell » : le Chromium complet, sans écran, met
+   en veille l'onglet qui n'est pas au premier plan, et la version qui y
+   joue ne dessine plus rien (vérifié : 0 image perdue par changement de
+   jour d'un côté, 383 par glisser de l'autre). */
+const navigateur = await chromium.launch(process.env.GEOPLAN_E2E_CHROMIUM
+  ? { executablePath: process.env.GEOPLAN_E2E_CHROMIUM } : {});
 const contexte = await navigateur.newContext({ ...devices["iPhone 15"], locale: "fr-FR", timezoneId: "Europe/Paris" });
 const pages = { A: await contexte.newPage(), B: await contexte.newPage() };
 await ouvrir(pages.A, "http://127.0.0.1:5311/");
