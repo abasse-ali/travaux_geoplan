@@ -34,9 +34,11 @@ export const FANTOME = "pointer-events-none fixed z-80 rounded-[10px] [border-wi
 
 interface Pt { x: number; y: number }
 
-/** Un glisser en cours : la puce tenue, où le doigt est parti, où il est. */
+/** Un glisser en cours : la puce tenue, le doigt qui la tient, où il est
+    parti, où il est. */
 interface DragState {
   pid: string; name: string; chip: HTMLElement;
+  pointeur: number;
   start: Pt; cur: Pt; active: boolean;
   target: string | null;               // id du chantier survolé, « __pool » pour le vivier
   timer: ReturnType<typeof setTimeout>;
@@ -109,13 +111,27 @@ export function useDrag({ onDrop, onTap, urgence, scrollRef }: DragOptions): voi
     /* La fin du dernier geste au doigt (onClick l'ignore dans la foulée). */
     let finDuGeste = -Infinity;
 
+    /* Un glisser suit un seul doigt : le premier posé. Un second doigt (la
+       paume, l'autre main) ne le reprend pas, ne le fait pas lâcher, et
+       ne soulève rien : touchant une autre puce, il la faisait poser à la
+       place de la première, qui restait estompée ; levé n'importe où, il
+       posait la puce sur la zone survolée à cet instant (relecture
+       adversariale de W6 ; même trou depuis la première version). */
+    const autreDoigt = (e: PointerEvent) => drag.current !== null && e.pointerId !== drag.current.pointeur;
+
     const onDown = (e: PointerEvent) => {
       if (e.button !== undefined && e.button !== 0) return;
+      if (drag.current) {
+        if (!e.isPrimary) return;
+        /* Un premier doigt alors qu'un glisser court : la fin de celui-ci
+           s'est perdue. Il est abandonné, comme interrompu. */
+        abandonner();
+      }
       const chip = (e.target as Element).closest?.<HTMLElement>(".chip");
       if (!chip || !chip.dataset.pid) return;
       const start = { x: e.clientX, y: e.clientY };
       drag.current = {
-        pid: chip.dataset.pid, name: chip.dataset.name || "", chip,
+        pid: chip.dataset.pid, name: chip.dataset.name || "", chip, pointeur: e.pointerId,
         start, cur: start, active: false, target: null,
         timer: setTimeout(lift, 190)
       };
@@ -123,7 +139,7 @@ export function useDrag({ onDrop, onTap, urgence, scrollRef }: DragOptions): voi
 
     const onMove = (e: PointerEvent) => {
       const d = drag.current;
-      if (!d) return;
+      if (!d || autreDoigt(e)) return;
       const pt = { x: e.clientX, y: e.clientY };
       d.cur = pt;
       if (!d.active) {
@@ -171,7 +187,8 @@ export function useDrag({ onDrop, onTap, urgence, scrollRef }: DragOptions): voi
       vol = voler(g, () => d.chip, () => d.chip.classList.remove("lifted"));
     };
 
-    const onUp = () => {
+    const onUp = (e: PointerEvent) => {
+      if (autreDoigt(e)) return;
       const d = finir();
       if (!d) return;
       /* Un appui sans glisser n'a jamais montré le fantôme (s'il vole
@@ -196,13 +213,14 @@ export function useDrag({ onDrop, onTap, urgence, scrollRef }: DragOptions): voi
        centre de contrôle) : rien n'est posé, aucune fiche ne s'ouvre. Un
        pointercancel était traité comme un relâchement, et la puce se
        posait sur la zone survolée à cet instant (constat U6). */
-    const onCancel = () => {
+    const abandonner = () => {
       const d = finir();
       if (!d?.active) return;
       const ilot = d.target === "__pool" && d.chip.dataset.site ? document.getElementById("vivier") : null;
       if (ilot) degonfler(ilot);
       revenir(d);
     };
+    const onCancel = (e: PointerEvent) => { if (!autreDoigt(e)) abandonner(); };
 
     const noScroll = (e: Event) => { if (drag.current?.active) e.preventDefault(); };
     const noMenu = (e: Event) => { if (drag.current?.active) e.preventDefault(); };

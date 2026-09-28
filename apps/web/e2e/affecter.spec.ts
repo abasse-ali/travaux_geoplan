@@ -261,6 +261,99 @@ test("B4 — un glisser interrompu par le système ne pose rien", async ({ page 
   await expect(puceSur(page, S12, "Nixon")).toHaveCount(0);
 });
 
+/* Plusieurs doigts, joués dans la page : chaque étape part du centre d'un
+   élément ; un pointermove « pas: n » y va en n images depuis la position
+   du doigt. Le second doigt n'est pas le doigt principal (isPrimary). */
+type Etape = { doigt: number; type: "pointerdown" | "pointermove" | "pointerup"; sur: string; pas?: number };
+async function doigts(page: import("@playwright/test").Page, etapes: Etape[]): Promise<{ lifted: string[]; fantomeVisible: boolean }> {
+  return page.evaluate(async etapes => {
+    const image = () => new Promise(r => requestAnimationFrame(r));
+    const pos = new Map<number, [number, number]>();
+    const centre = (s: string) => {
+      const b = document.querySelector<HTMLElement>(s)!.getBoundingClientRect();
+      return [b.x + b.width / 2, b.y + b.height / 2] as [number, number];
+    };
+    const ev = (type: string, doigt: number, x: number, y: number, sur: EventTarget) => sur.dispatchEvent(new PointerEvent(type,
+      { bubbles: true, cancelable: true, button: 0, clientX: x, clientY: y, pointerId: doigt, isPrimary: doigt === 1, pointerType: "touch" }));
+    for (const e of etapes) {
+      if (e.type === "pointerdown") {
+        const [x, y] = centre(e.sur);
+        pos.set(e.doigt, [x, y]);
+        ev("pointerdown", e.doigt, x, y, document.querySelector(e.sur)!);
+      } else if (e.type === "pointermove") {
+        const [x0, y0] = pos.get(e.doigt)!, [x1, y1] = centre(e.sur), n = e.pas ?? 10;
+        for (let k = 1; k <= n; k++) {
+          await image();
+          ev("pointermove", e.doigt, x0 + (x1 - x0) * k / n, y0 + (y1 - y0) * k / n, document);
+        }
+        pos.set(e.doigt, [x1, y1]);
+      } else {
+        const [x, y] = pos.get(e.doigt)!;
+        ev("pointerup", e.doigt, x, y, document);
+      }
+      await image();
+    }
+    await new Promise(r => setTimeout(r, 700));
+    return {
+      lifted: [...document.querySelectorAll<HTMLElement>(".chip.lifted")].map(c => c.dataset.name || ""),
+      fantomeVisible: !document.querySelector<HTMLElement>("[data-fantome]")!.hidden
+    };
+  }, etapes);
+}
+
+test.describe("B4 — un second doigt pendant un glisser", () => {
+  /* Relecture adversariale de W6 (défaut présent depuis la première
+     version) : le glisser ne regardait pas quel doigt bougeait. Un second
+     doigt — l'autre main, la paume — reprenait le glisser ou le lâchait,
+     et une affectation fausse était enregistrée. */
+  test("B4 — posé sur une autre puce, il ne reprend pas le glisser", async ({ page }) => {
+    await openLocal(page);
+    await montrerZone(page, S12);
+    const nixon = '#vivier [data-name="Nixon"]', giorgi = '#vivier [data-name="Giorgi"]', cible = `[data-drop="${S12}"] [data-zone-titre]`;
+    const r = await doigts(page, [
+      { doigt: 1, type: "pointerdown", sur: nixon },
+      { doigt: 1, type: "pointermove", sur: cible, pas: 10 },
+      { doigt: 2, type: "pointerdown", sur: giorgi },
+      { doigt: 1, type: "pointermove", sur: `[data-drop="${S12}"]`, pas: 4 },
+      { doigt: 1, type: "pointerup", sur: cible },
+      { doigt: 2, type: "pointerup", sur: giorgi }
+    ]);
+    await expect(puceSur(page, S12, "Nixon")).toHaveCount(1);
+    await expect(puceSur(page, S12, "Giorgi")).toHaveCount(0);
+    expect(r).toEqual({ lifted: [], fantomeVisible: false });
+  });
+
+  test("B4 — levé ailleurs, il ne lâche pas la puce", async ({ page }) => {
+    await openLocal(page);
+    await montrerZone(page, S9);
+    await doigts(page, [
+      { doigt: 1, type: "pointerdown", sur: '#vivier [data-name="Nixon"]' },
+      { doigt: 1, type: "pointermove", sur: `[data-drop="${S9}"]`, pas: 10 },
+      { doigt: 2, type: "pointerdown", sur: "header h1" },
+      { doigt: 2, type: "pointerup", sur: "header h1" },
+      { doigt: 1, type: "pointermove", sur: "[data-bandeau-resume]", pas: 6 },
+      { doigt: 1, type: "pointerup", sur: "[data-bandeau-resume]" }
+    ]);
+    // Lâchée hors de toute cible par le premier doigt : rien ne change (B4).
+    await expect(puceSur(page, S9, "Nixon")).toHaveCount(0);
+    await expect(puceVivier(page, "Nixon")).toHaveCount(1);
+  });
+
+  test("B4 — témoin : à un seul doigt, le même geste pose Nixon, et lui seul", async ({ page }) => {
+    await openLocal(page);
+    await montrerZone(page, S12);
+    const cible = `[data-drop="${S12}"] [data-zone-titre]`;
+    const r = await doigts(page, [
+      { doigt: 1, type: "pointerdown", sur: '#vivier [data-name="Nixon"]' },
+      { doigt: 1, type: "pointermove", sur: cible, pas: 10 },
+      { doigt: 1, type: "pointermove", sur: `[data-drop="${S12}"]`, pas: 4 },
+      { doigt: 1, type: "pointerup", sur: cible }
+    ]);
+    await expect(puceSur(page, S12, "Nixon")).toHaveCount(1);
+    expect(r).toEqual({ lifted: [], fantomeVisible: false });
+  });
+});
+
 test("B5 — poser quelqu'un d'absent est accepté, avec un avertissement 2,9 s plus tard", async ({ page }) => {
   // Kia ne vient que le jeudi ; il est pourtant posé ce mercredi.
   await openLocal(page, effectifAvec(e => poser(e, S9, TODAY, ["p_kia"])));

@@ -247,6 +247,9 @@ export function creerActions({ synchro, enHaut }: Branchements): Actions {
         return Math.round(frac * steps) / steps * 100;
       };
       const startX = e.clientX, startY = e.clientY;
+      /* Le doigt qui a pris la barre la règle seul : un second doigt ne la
+         déplace pas et ne la lâche pas (relecture adversariale de W6). */
+      const autreDoigt = (ev: PointerEvent) => ev.pointerId !== e.pointerId;
       /* La barre a une zone de toucher plus haute qu'elle (24 px, WCAG
          2.5.8), qui couvre l'espace, mort en W4, entre elle et la première
          mission : un appui là vise la mission. Glisser depuis la zone
@@ -257,6 +260,7 @@ export function creerActions({ synchro, enHaut }: Branchements): Actions {
       let on = false;
       let derniere: number | null = null;
       const move = (ev: PointerEvent) => {
+        if (autreDoigt(ev)) return;
         if (!on) {
           const dx = Math.abs(ev.clientX - startX), dy = Math.abs(ev.clientY - startY);
           if (dy > dx && dy > 6) return stop();      // l'utilisateur défile
@@ -268,7 +272,8 @@ export function creerActions({ synchro, enHaut }: Branchements): Actions {
         derniere = apercuEtape(i, val(ev.clientX));
         setLocal?.(derniere);
       };
-      const up = () => {
+      const up = (ev: PointerEvent) => {
+        if (autreDoigt(ev)) return;
         if (!on) {
           /* Un simple appui bascule l'étape entre 0 et 100 %, comme avant
              W4 (constat U4, gardé en l'état) — sur la barre dessinée
@@ -283,7 +288,8 @@ export function creerActions({ synchro, enHaut }: Branchements): Actions {
          défilement que le navigateur reprend) ne règle rien, et la barre
          revient à ce qui est enregistré : elle gardait l'aperçu du glisser
          (constat U23). */
-      const annuler = () => {
+      const annuler = (ev: PointerEvent) => {
+        if (autreDoigt(ev)) return;
         setLocal?.(null);
         stop();
       };

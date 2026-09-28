@@ -47,7 +47,7 @@ export type SheetState =
 export type SetLocal = (v: number | null) => void;
 
 /** Le point de départ d'un glisser sur une barre. */
-export interface PointerStart { clientX: number; clientY: number }
+export interface PointerStart { clientX: number; clientY: number; pointerId: number }
 
 /** Les actions de l'écran (ui/actions.ts). Créées une fois : elles lisent
     l'état courant au moment où elles s'exécutent, jamais celui de leur
