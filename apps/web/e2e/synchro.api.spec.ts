@@ -94,3 +94,34 @@ test("S4 — une fiche n'envoie que ce qu'on y a changé : la modification d'un 
   expect(await lireBase("SELECT phone, note FROM people WHERE id = ?", ["p_nixon"]))
     .toEqual([{ phone: "+33699999999", note: "casque neuf" }]);
 });
+
+/* R3 (relecture de la recette, W8). Le serveur ne répond pas (une API
+   figée, un réseau de chantier qui avale les requêtes sans les refuser) :
+   la source api attendait sa réponse sur la session avant de rien
+   montrer — la marque seule, 30 s derrière nginx. Comme la source
+   supabase depuis W4 (S10), elle ouvre maintenant sur le compte retenu,
+   sans attendre le réseau. */
+test("R3 — lancée quand le serveur ne répond pas, l'écran vient de l'appareil, sans attendre", async ({ page }) => {
+  await openLocal(page);
+  await expect(etat(page)).toHaveText(/^à jour$/i);
+  await expect.poll(() => page.evaluate(() => Object.keys(localStorage).some(k => k.startsWith("geoplan.instantane.v4:")))).toBe(true);
+  // Plus aucune réponse : les requêtes partent, et rien ne revient.
+  await page.route(/\/(api|socket\.io)\//, () => {});
+  await page.reload();
+  await expect(page.locator("article[data-site]")).toHaveCount(3, { timeout: 5_000 });
+  await expect(page.getByRole("button", { name: "Se connecter" })).toHaveCount(0);
+});
+
+/* La contrepartie : ouverte sans attendre, l'application apprend à la
+   première lecture que la session n'est plus valable (expirée, révoquée)
+   et revient à l'écran de connexion. */
+test("R3 — ouverte sur le compte retenu, une session refusée à la première lecture ramène à la connexion", async ({ page }) => {
+  await openLocal(page);
+  await expect(etat(page)).toHaveText(/^à jour$/i);
+  await page.context().clearCookies();
+  await page.reload();
+  await expect(page.getByRole("button", { name: "Se connecter" })).toBeVisible({ timeout: 15_000 });
+  // Et le lancement suivant ne rouvre plus l'application sur le compte oublié.
+  await page.reload();
+  await expect(page.getByRole("button", { name: "Se connecter" })).toBeVisible({ timeout: 15_000 });
+});

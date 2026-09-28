@@ -286,16 +286,23 @@ export function depotApi(): Depot {
     source: "api",
 
     compte: async () => {
+      /* D'abord le compte retenu, sans attendre le réseau, comme la source
+         supabase (S10) : un serveur qui ne répond pas (une API figée, un
+         réseau qui avale les requêtes) laissait la marque seule jusqu'à sa
+         réponse, 30 s derrière nginx (constat R3). Une session expirée ou
+         révoquée se découvre à la première lecture (401, plus bas), qui
+         ramène à l'écran de connexion. */
+      const retenu = dernierCompte();
+      if (retenu) return retenu;
       let r: Reponse;
       try { r = await appel("GET", "/api/session"); }
-      catch { return dernierCompte(); }                // hors ligne : le dernier compte connu
+      catch { return null; }                           // hors ligne, sans compte déjà vu
       if (r.statut === 200) {
         const c = compteDe(String((r.corps as { email?: string } | null)?.email ?? ""));
         retenir(c);
         return c;
       }
-      if (r.statut === 401) { retenir(null); return null; }
-      return dernierCompte();                          // serveur en difficulté : on garde le cache
+      return null;
     },
 
     connecter: async (email, motDePasse) => {
@@ -322,7 +329,11 @@ export function depotApi(): Depot {
       retenir(null);
     },
 
-    charger: async () => instantaneDe(succes(await appel("GET", "/api/donnees"))),
+    charger: async () => {
+      const r = await appel("GET", "/api/donnees");
+      if (r.statut === 401) retenir(null);            // la session ne tient plus : le lancement suivant demandera la connexion
+      return instantaneDe(succes(r));
+    },
 
     envoyer,
 

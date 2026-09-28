@@ -49,13 +49,30 @@ describe("le compte", () => {
     expect(await depotApi().compte()).toEqual({ id: "geoffrey@geoplan.test", email: "geoffrey@geoplan.test" });
   });
 
-  it("401 : il faut se connecter, et le compte retenu est oublié", async () => {
+  it("401 à la lecture : il faut se connecter, et le compte retenu est oublié", async () => {
     repondre = () => json(200, { email: "geoffrey@geoplan.test" });
     await depotApi().compte();
     repondre = () => json(401, { erreur: "non-connecte" });
-    expect(await depotApi().compte()).toBeNull();
+    await expect(depotApi().charger()).rejects.toBeInstanceOf(NonConnecte);
     repondre = () => { throw new TypeError("Failed to fetch"); };
     expect(await depotApi().compte()).toBeNull();
+  });
+
+  it("401 à la question de la session, sans compte retenu : l'écran de connexion", async () => {
+    repondre = () => json(401, { erreur: "non-connecte" });
+    expect(await depotApi().compte()).toBeNull();
+  });
+
+  /* R3 (relecture de la recette, W8) : un serveur qui ne répond pas ne
+     retient plus l'ouverture. Le compte retenu suffit, comme pour la
+     source supabase (S10) ; la première lecture dira si la session tient. */
+  it("un compte retenu ouvre l'application sans rien demander au serveur", async () => {
+    repondre = () => json(200, { email: "geoffrey@geoplan.test" });
+    await depotApi().compte();
+    appels = [];
+    repondre = () => new Promise<Response>(() => {});        // le serveur ne répond plus
+    expect(await depotApi().compte()).toEqual({ id: "geoffrey@geoplan.test", email: "geoffrey@geoplan.test" });
+    expect(appels).toEqual([]);
   });
 
   it("hors ligne, sans compte déjà vu : l'écran de connexion", async () => {
