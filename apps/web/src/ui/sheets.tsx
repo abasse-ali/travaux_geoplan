@@ -86,7 +86,9 @@ function Champ({ libelle, children }: { libelle: ReactNode; children?: ReactNode
 /* Les saisies d'un champ : texte, fichier, zone de texte. */
 const SAISIE = "w-full rounded-[10px] border border-line-champ bg-surface-2";
 const TEXTE = cn(SAISIE, "px-3 py-2.75 text-[16px]");
-const FICHIER = cn(SAISIE, "p-2.25 font-body text-[13px]");
+/* 44 px au moins : WebKit dessine le choix de fichier assez haut de
+   lui-même, Chromium (Android, bureau) à 42 px. */
+const FICHIER = cn(SAISIE, "min-h-11 p-2.25 font-body text-[13px]");
 const ZONE_TEXTE = cn(SAISIE, "min-h-[130px] resize-y px-3 py-2.75 font-mono text-[12px]/[1.5]");
 
 /* Un groupe de choix : une ligne de boutons à parts égales, le choix
