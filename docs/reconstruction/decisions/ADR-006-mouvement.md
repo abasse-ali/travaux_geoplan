@@ -1,6 +1,6 @@
 # ADR-006 — Le mouvement : CSS et Web Animations, sans bibliothèque
 
-**Statut** : proposé (W6 l'implémente ; les mesures du journal le fondent) · **Date** : 2026-09-28
+**Statut** : accepté (W6 l'implémente ; les mesures du journal le fondent) · **Date** : 2026-09-28 · L'écart avec la pile cible (GSAP écarté) attend l'avis du propriétaire : journal, question 8.
 
 ## Contexte
 
@@ -62,6 +62,8 @@ Une sortie n'est animée que si elle dit quelque chose : un toast qui s'éteint,
 
 Ce qui porte une information reste : l'état final, jamais le chemin.
 
+Un test le vérifie d'ensemble (K3, « un tour des gestes ») : il note tout ce qui bouge pendant un tour de chaque geste qui bougeait — animation ou transition CSS de plus de 1 ms ou à délai, animation de script — et n'accepte rien sous le mouvement réduit. Les délais comptent : la règle CSS ramène les durées à 0,01 ms, pas les délais ; le code n'en pose aucun sous le mouvement réduit.
+
 ### Le son et le toucher
 
 Un retour sonore discret (Web Audio, synthétisé : aucun fichier) pour poser et retirer une puce, désactivable, **désactivé par défaut**. Le retour haptique (`navigator.vibrate`) reste là où il existe.
@@ -79,3 +81,4 @@ Chaque animation ajoutée, retirée ou déplacée d'un mécanisme à l'autre a s
 - Les deux pages s'allègent de Framer Motion, et rien ne le remplace dans le paquet.
 - Plus d'animations de mise en page implicites : une puce ne glisse plus à sa place à chaque rendu, le vivier ne réinterpole plus sa taille quand son contenu change. Là où un changement de forme a un sens (le vivier qu'on ouvre), il est joué explicitement, au moment du geste.
 - Les tests ne dépendent plus des sorties de Framer (`AnimatePresence`) ni d'une horloge de script : une liste repliée disparaît quand sa sortie est jouée, par l'horloge du document.
+- Un volet (`Repli`) rogne son contenu par `overflow: clip`, pas `hidden` : rogné sans être une zone de défilement. Avec `hidden`, le focus qui entrait dans un volet en train de s'ouvrir le faisait défiler sur lui-même, et le contenu redescendait sous le doigt pendant l'animation (constat U26). `hidden` reste pour les navigateurs qui ne connaissent pas `clip` (Safari avant la version 16).

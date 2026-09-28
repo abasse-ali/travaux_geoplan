@@ -7,12 +7,10 @@ Le **prochain geste** est toujours en tête. Les entrées de workflow sont en ba
 
 ## Prochain geste
 
-W6 — le mouvement, sur `reconstruction/w6-mouvement` (partie de W5), en cours ; les règles sont dans l'ADR-006. Fait : l'inventaire, l'outil de mesure (neuf gestes), U22, la coque, Chantiers, le vivier (Web Animations ; GSAP essayé, pas retenu). Reste, dans l'ordre, chaque pas mesuré :
-1. les toasts ; Équipe, Semaine, les feuilles, la connexion ; la page compagnon ; Framer Motion retiré (et `MotionConfig`, `ressorts.ts`) ; les poids ;
-2. les mouvements ajoutés : le lâcher d'une puce (et U6 : un glisser interrompu par le système ne dépose plus rien), la séquence de « Répartir », le vivier qui se déforme sous une puce ;
-3. Web Audio : un retour discret pour poser et retirer une puce, désactivable, désactivé par défaut ; le retour haptique gardé là où il existe (`navigator.vibrate`, `useDrag.ts` ; Safari ne l'avait pas, à vérifier sur l'iPhone) ;
-4. Three.js : le dire s'il ne sert à rien d'honnête, et ne rien mettre ;
-5. la porte : `prefers-reduced-motion` coupe tout le décoratif ; chaque animation ajoutée a sa mesure A/B ; W1 vert ; relecture adversariale.
+W6 — le mouvement : tout est fait sauf la fin de la porte. Reprise le 2026-09-28 dans une session cloud, sur la branche `claude/happy-feynman-rpp9pt` de `abasse-ali/travaux_geoplan` (question 9) ; ses constats (V6, U23 à U26) sont corrigés, un commit chacun. Reste, dans l'ordre :
+1. la relecture adversariale de W6 (lancée) : vérifier chaque constat, corriger ce qui cède, un commit chacun ;
+2. la puce et son `will-change: transform` : une première mesure, sur une machine chargée, le dit inutile (changer de jour : 1,36 → 0,70 image perdue sans lui ; glisser, semaine : dans l'écart du contrôle A/A) ; la refaire au calme, dans les deux sens, puis le garder ou le retirer ;
+3. rejouer le filet sur les trois sources, clore l'entrée W6 (le tableau de la porte), pousser. W7 attend alors le propriétaire (question 11).
 
 Pistes : « semaine » coûte encore une vingtaine d'images au rendu des fiches, pas au mouvement ; la puce garde `will-change: transform` (utile à Framer, plus maintenant) ; le rendu des onglets de Radix à chaque jour choisi (+0,2 image, W5).
 
@@ -28,7 +26,7 @@ Reste de W4 pour le propriétaire : l'essai en mode avion sur l'iPhone.
 | W3 Monorepo et API | `reconstruction/w3-api` | fait, porte verte |
 | W4 État client | `reconstruction/w4-client` | fait, porte verte (reste l'essai en mode avion sur l'iPhone) |
 | W5 Interface | `reconstruction/w5-ui` | fait, porte verte |
-| W6 Mouvement | `reconstruction/w6-mouvement` | en cours |
+| W6 Mouvement | `reconstruction/w6-mouvement`, puis `claude/happy-feynman-rpp9pt` (`travaux_geoplan`) | porte en cours |
 | W7 à W9 | — | à faire |
 
 **Rien n'est fusionné sur `main`.** Voir « Questions au propriétaire », point 1.
@@ -46,8 +44,11 @@ Ce que je ne peux pas trancher seul. Le reste est décidé dans les ADR.
 4. **Trois évolutions de l'algorithme d'affectation à trancher** (D2, D3, D12). Ce ne sont pas des pannes : le moteur fait des choix discutables. Je peux chiffrer chacune avec le golden master (avant/après) ; je n'y touche pas sans ton accord.
 5. **W5 change ce que Geoffrey voit**, un peu, et exprès : des couleurs de texte un cran plus foncées (contraste AA, en clair comme en sombre), l'orange des boutons aussi, les quantièmes du week-end en gris, un compagnon posé un jour d'absence signalé aussi par un trait en tirets (pas seulement la couleur), et « Auj. » qui paraît avant la flèche au lieu de prendre sa place (U19 : deux appuis rapides ramenaient à aujourd'hui). Chaque image changée est expliquée dans son commit (`c176075`, `613ce83`, `eaf22ef`) ; le reste est identique au pixel. Deux autres défauts de production sont corrigés, qui ne se voient pas au doigt : une puce s'ouvre au clavier (U20), chaque champ a un nom (U21). La fluidité de W4 est gardée, à 0,2 image près au changement de jour. Rien de cela n'est en production : il part avec la fusion, quand tu la décides (point 1).
 6. **Les grappes serrées.** 44 × 44 px au doigt partout où c'est possible sans changer le dessin. Dans sept grappes, les voisines sont trop proches : les puces (33 px), les cases de la grille Semaine, le titre (28 px) et la barre (24 px) d'une étape, les volets empilés, les cinq niveaux d'une compétence (31 px), « Ses jours dispo » et « Aucun », la tête du vivier ; et, sur un écran de 320 px de large seulement, les sept jours de la bande et du sélecteur. Elles tiennent le minimum WCAG (24 px), pas la recommandation d'Apple (44). Les agrandir changerait le dessin (zones et grille plus hautes) : c'est à toi de trancher ; je peux chiffrer la place perdue écran par écran.
-7. **Un budget pour `index.html` ?** Le principe 7 fixe celui de la page compagnon (au plus +10 %) ; rien pour l'application. W5 l'a fait passer de 137 à 147 ko (+7,5 %, surtout les onglets et l'interrupteur de Radix, pour l'accessibilité), en gardant les feuilles à part. Si tu veux un plafond, je le fais tenir par `npm run measure`.
+7. **Un budget pour `index.html` ?** Le principe 7 fixe celui de la page compagnon (au plus +10 %) ; rien pour l'application. W5 l'a fait passer de 137 à 147 ko (+7,5 %, surtout les onglets et l'interrupteur de Radix, pour l'accessibilité), en gardant les feuilles à part ; W6 l'a ramené à 112,5 ko, sous les 120,3 ko d'avant la reconstruction (Framer Motion retiré). Si tu veux un plafond, je le fais tenir par `npm run measure`.
 8. **GSAP n'est pas dans W6**, alors que la pile cible le nomme. Essayé là où la mission l'attendait (la déformation du vivier), il perd 1,86 image par geste là où le navigateur seul (Web Animations) en perd 0,44 ; et son horloge (`Date.now`) est figée par le filet de tests. Le mouvement passe par le CSS et Web Animations, sans bibliothèque (ADR-006) : Framer Motion part aussi, et les deux pages s'allègent de 37 ko. Si tu tiens à GSAP pour une raison que je ne vois pas (des séquences à venir bien plus riches, par exemple), il se remet en un module : dis-le-moi.
+9. **Quel dépôt fait foi ?** W6 a été fini dans `abasse-ali/travaux_geoplan`, une copie de ta copie de travail en un seul commit : l'historique de W0 à W6 (un commit par correction, chacun annoncé) n'y est pas. Il est dans `abasse-ali/geoplan`, et, pour les branches jamais poussées (W2 à W6 au moins), seulement sur ta machine, où la copie de travail de W6 avait encore des changements non enregistrés. Netlify publie la `main` de `geoplan`. Deux voies : (a) tu enregistres et pousses `reconstruction/w6-mouvement` (avec ses changements en cours) sur `geoplan`, et je reporte dessus les commits de la porte, un par un ; (b) `travaux_geoplan` devient la référence, et l'historique d'avant reste dans `geoplan`. Je recommande (a) : l'historique est la preuve de chaque correction.
+10. **`apps/web/dist/` est versionné dans `travaux_geoplan`**, sans doute par la copie : c'est une construction, déjà périmée (d'avant le lâcher et la vague). Je propose de le retirer et de l'ignorer ; le sort de `dist/` et `dist-preview/` reste à trancher en W9. Je n'y touche pas sans ton accord.
+11. **W7, la bascule, attend trois choses de toi** : un VPS (Hetzner ou Scaleway, voir `infra/deploy/README.md`), un nom de domaine, et le mot « on bascule ». Rien d'autre ne bloque : l'API, l'infrastructure et le client pour l'API sont prêts et testés en local.
 
 ---
 
@@ -156,6 +157,11 @@ D2 est **confirmé** par un test de propriétés (un peintre niveau 3 « débloq
 | U20 | Une puce ne s'ouvre qu'au pointeur : au clavier, sa fiche (« Poser sur… », l'alternative au glisser) est hors d'atteinte. En production. | basse | relecture W5, e2e (L3) | **corrigé** `6b93b80` |
 | U21 | Les champs des feuilles n'ont pour nom que leur texte d'exemple, qui disparaît à la première frappe ; « Début » n'en a aucun : le libellé n'est relié à rien. En production. | basse | relecture W5, e2e (L1) | **corrigé** `6b93b80` |
 | U22 | Un toast prend le doigt. 2,8 s durant après chaque dépôt, il couvre le milieu du vivier ouvert : une puce lâchée là ne revient pas au vivier (le dépôt ne vise plus rien, sans un mot), une puce du vivier dessous ne se prend pas. En production. | moyenne | mesure W6 (un glisser sur quatre sans effet), e2e (B3) | **corrigé** W6 |
+| V6 | Suite de V5, sources api et supabase : sans rien sur l'appareil (première connexion), la coque dessine d'abord l'attente ; le libellé de la semaine et « Auj. » naissaient au rendu suivant, après le « premier rendu », et entraient en glissant sans que rien n'arrive, en couvrant 2 px de la flèche « Semaine précédente ». | basse | e2e (K6 et trois L2, sources api et supabase, Chromium) | **corrigé** `02c7320` |
+| U23 | Un glisser sur la barre d'une étape interrompu par le système (pointercancel) n'enregistrait rien, comme voulu depuis U6, mais la barre gardait l'aperçu du glisser (50 % affichés, 75 % enregistrés) jusqu'à ce que l'étape se replie. Préexistant : en production, la valeur était écrite en mémoire sans être envoyée. | basse | e2e (C4, Chromium ; test ajouté) | **corrigé** `5119290` |
+| U24 | À la souris (Chromium : bureau, Android), un geste vertical parti de la barre d'une étape sélectionnait le texte des missions ; le glisser suivant emportait la sélection (un glisser-déposer du navigateur, qui interrompt le geste) au lieu de régler l'étape. | basse | e2e (C4, Chromium) | **corrigé** `05ce2a8` |
+| U25 | Le champ de fichier de la feuille « Données » : 42 px de haut dans Chromium (44 au doigt attendus ; WebKit le dessine plus haut). | basse | e2e (L2, Chromium) | **corrigé** `b053840` |
+| U26 | Un volet (étapes, missions, note, jours de « Répartir ») était une zone de défilement (overflow: hidden) : le focus, ou scrollIntoView, qui y entrait pendant qu'il s'ouvre le faisait défiler sur lui-même, puis le contenu redescendait image après image. Sous Playwright, le titre visé descendait entre l'appui et le relâché : rien ne se dépliait (C5, C6 contre l'API, 3 fois sur 40). | basse | e2e (C1 ajouté ; scénario rejoué 40 fois) | **corrigé** `cd88fcd` (overflow: clip) |
 
 ---
 
@@ -170,6 +176,7 @@ Les ADR sont dans `docs/reconstruction/decisions/`.
 | ADR-003 | Écritures : des opérations pour les affectations (fusion à trois voies pour l'équipe et le plan), verrou optimiste pour les fiches, idempotence, temps réel ciblé | W3 (serveur), W4 (client) |
 | ADR-004 | Client : une interface `Depot`, trois sources, une file de gestes persistée par compte, TanStack Query pour l'instantané, Zustand pour l'interface | W4 |
 | ADR-005 | Interface : Tailwind v4 sur des jetons à une seule source, primitives shadcn/ui (Drawer, Switch, Tabs), garde-fous CSS, accessibilité mesurée (contrastes AA, cibles de 44 px, 24 dans les grappes serrées) | W5 |
+| ADR-006 | Mouvement : le CSS et Web Animations, sans bibliothèque ; Framer Motion retiré, GSAP essayé puis écarté (mesuré) ; le mouvement réduit coupe tout le décoratif ; son des gestes éteint par défaut ; pas de Three.js | W6 |
 
 ---
 
