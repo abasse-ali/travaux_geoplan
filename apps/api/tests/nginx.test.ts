@@ -55,4 +55,13 @@ describe("nginx devant l'API", () => {
     expect(conf).toMatch(/set\s+\$api\s+http:\/\/api:3000;/);
     for (const e of versLApi) expect(e.corps, e.chemin).toMatch(/proxy_pass\s+\$api;/);
   });
+
+  /* Relecture de la recette (W8) : le 404 d'un fichier absent partait
+     avec « immutable, un an » ; un cache devant nginx l'aurait gardé. */
+  it("ne déclare immuables que les fichiers qui existent", () => {
+    const assets = /location\s+\/assets\/\s*\{([^}]*)\}/.exec(conf)?.[1] ?? "";
+    const entete = /add_header\s+Cache-Control\s+"([^"]+)"([^;]*);/.exec(assets);
+    expect(entete?.[1]).toContain("immutable");
+    expect(entete?.[2], "sans « always », l'en-tête ne part qu'avec une réponse réussie").not.toMatch(/always/);
+  });
 });
