@@ -139,8 +139,12 @@ function Phase({ site, i, open, onToggle, onTask, onBar }: PhaseProps){
           <span className="ml-0.5 flex self-center"><Chevron haut={open} /></span>
         </button>
 
+        {/* Pas de sélection de texte depuis la barre : à la souris, un
+            geste vertical parti d'elle sélectionnait les missions, et le
+            glisser suivant emportait la sélection (un glisser-déposer du
+            navigateur, qui interrompt le geste) au lieu de régler l'étape. */}
         <div data-cible="serree"
-          className="relative isolate mt-1.5 h-3.5 touch-pan-y rounded-[4px] bg-surface-3 before:absolute before:-z-10 before:inset-x-0 before:-top-[3px] before:-bottom-[7px] before:content-['']"
+          className="relative isolate mt-1.5 h-3.5 touch-pan-y rounded-[4px] bg-surface-3 select-none before:absolute before:-z-10 before:inset-x-0 before:-top-[3px] before:-bottom-[7px] before:content-['']"
           role="slider" tabIndex={0}
           aria-label={"Étape " + (i + 1) + " " + P.n}
           aria-valuenow={v} aria-valuemin={0} aria-valuemax={100}
