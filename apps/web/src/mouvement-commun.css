@@ -1,0 +1,19 @@
+/* ============================================================
+   Ce que l'application et la page compagnon partagent du mouvement
+   (ADR-006) : la règle du mouvement réduit, et l'entrée d'un message.
+   La page compagnon n'importe que cette feuille-ci ; les animations de
+   l'application sont dans mouvement.css.
+   ============================================================ */
+
+/* Un message sous un formulaire : connexion (ui/Gate.tsx), envoi manqué
+   de la page compagnon (dispo.tsx). */
+@keyframes message-in{from{opacity:0;transform:translateY(-6px)}}
+
+/* Mouvement réduit : les animations et transitions CSS s'arrêtent net,
+   feuille du bas comprise (test K3). Ce que joue le script (Web
+   Animations) le demande lui-même : ui/mouvement/reduit.ts. */
+@layer base {
+  @media (prefers-reduced-motion:reduce){
+    *{animation-duration:.01ms !important;transition-duration:.01ms !important}
+  }
+}

@@ -1,0 +1,18 @@
+/* Feuille de la page compagnon : les jetons et le socle de
+   l'application, et les seules classes Tailwind de dispo.tsx et de ce
+   qu'elle importe (principe 7 : la page reste petite). Tout son dessin
+   s'écrit en classes ; ses mouvements aussi, en CSS (ADR-006 : plus de
+   Framer Motion). De mouvement, elle ne prend que la règle du mouvement
+   réduit et l'entrée d'un message (mouvement-commun.css). */
+@layer theme, base, utilities;
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities) source(none);
+@source "./dispo.tsx";
+@source "./ui/ecran.tsx";
+@source "./ui/marque.tsx";
+/* transition : un mot des commentaires, pas une classe (npm run
+   verifier-css, garde-fou 4 ; voir app.css). */
+@source not inline("transition");
+@import "./jetons.css";
+@import "./base.css";
+@import "./mouvement-commun.css";

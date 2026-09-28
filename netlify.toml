@@ -1,0 +1,21 @@
+# Netlify compile lui-même : plus besoin de déposer un dossier à la main.
+# Dépôt en espaces de travail npm : l’installation se fait à la racine,
+# la commande délègue à apps/web, et c’est son dossier dist qui est publié.
+[build]
+  command = "npm run build"
+  publish = "apps/web/dist"
+
+[build.environment]
+  NODE_VERSION = "22"
+
+# Les deux pages sont de vraies pages : pas de réécriture vers index.html,
+# sinon /dispo.html renverrait l'application au lieu du formulaire.
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/sw.js"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"

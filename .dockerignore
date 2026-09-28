@@ -1,0 +1,12 @@
+node_modules
+**/node_modules
+.git
+**/dist
+**/.dist
+dist-preview
+legacy
+apps/web/e2e
+**/.results
+**/.report
+infra/.env
+.claude

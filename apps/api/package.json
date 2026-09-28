@@ -1,0 +1,36 @@
+{
+  "name": "@geoplan/api",
+  "version": "3.0.0",
+  "private": true,
+  "type": "module",
+  "description": "L'API de Geoplan : sessions, données, affectations, temps réel, lien compagnon, relance du samedi.",
+  "scripts": {
+    "dev": "node --disable-warning=ExperimentalWarning --watch src/server.ts",
+    "start": "node --disable-warning=ExperimentalWarning src/server.ts",
+    "migrations": "drizzle-kit generate",
+    "compte": "node --disable-warning=ExperimentalWarning src/cli/compte.ts",
+    "rappel": "node --disable-warning=ExperimentalWarning src/cli/rappel.ts",
+    "amorcer": "node --disable-warning=ExperimentalWarning src/cli/amorcer.ts"
+  },
+  "dependencies": {
+    "@geoplan/domain": "3.0.0",
+    "@node-rs/argon2": "2.2.1",
+    "@socket.io/redis-adapter": "8.3.0",
+    "croner": "10.0.1",
+    "drizzle-orm": "0.45.3",
+    "express": "5.2.1",
+    "ioredis": "6.0.0",
+    "mysql2": "3.24.4",
+    "pino": "10.3.1",
+    "socket.io": "4.8.4",
+    "zod": "4.6.5"
+  },
+  "devDependencies": {
+    "@testcontainers/mysql": "12.1.0",
+    "@testcontainers/redis": "12.1.0",
+    "@types/express": "5.0.6",
+    "drizzle-kit": "0.31.11",
+    "socket.io-client": "4.8.4",
+    "testcontainers": "12.1.0"
+  }
+}

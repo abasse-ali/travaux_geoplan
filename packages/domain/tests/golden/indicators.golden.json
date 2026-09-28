@@ -1,0 +1,13 @@
+{
+  "jhRestants": 101.3,
+  "journeesPosees": 330,
+  "journeesUtiles": 299,
+  "journeesSteriles": 31,
+  "journeesDepot": 368,
+  "doublesRepartiteur": 0,
+  "doublesIsole": 964,
+  "reconduction": 0.663,
+  "raisonsOrphelines": 0,
+  "poseesSansRaison": 0,
+  "chantiersTermines": []
+}

@@ -1,0 +1,54 @@
+/* ============================================================
+   Les animations nommées de l'application (ADR-006).
+
+   Une animation nommée s'écrit mal en classe : ses @keyframes sont ici,
+   et les classes la citent (animate-[fade_.2s_ease]…). Le mouvement
+   réduit, et l'entrée d'un message, sont dans mouvement-commun.css, que
+   la page compagnon partage.
+
+   Jamais de fill-mode « both » sur une animation d'entrée : si elle ne
+   démarre pas — onglet en arrière-plan, moteur qui la refuse — l'élément
+   resterait invisible pour toujours. L'état au repos est donc visible,
+   et l'animation n'est qu'un ornement par-dessus.
+   ============================================================ */
+
+/* Le point du bouton d'état, pendant un envoi (ui/App.tsx). */
+@keyframes sdot-pulse{0%,100%{opacity:1}50%{opacity:.25}}
+/* L'attente au démarrage : la marque apparaît, à moitié estompée (ui/App.tsx). */
+@keyframes boot-in{from{opacity:0}to{opacity:.55}}
+/* Un fondu d'entrée : un onglet (ui/App.tsx), un indice de zone vide et
+   un visage du vivier (Chantiers, Island), une ligne de l'équipe. */
+@keyframes fade{from{opacity:0}to{opacity:1}}
+/* La coche d'une mission (ui/Chantiers.tsx). */
+@keyframes tickIn{from{transform:scale(.3);opacity:0}to{transform:none;opacity:1}}
+/* L'entrée d'une puce du vivier (ui/Island.tsx) et d'un nom dans la
+   grille de la semaine (ui/Semaine.tsx). */
+@keyframes chipIn{from{opacity:.35;transform:scale(.92)}to{opacity:1;transform:none}}
+/* La barre de l'étape en cours, à son arrivée (ui/Chantiers.tsx). */
+@keyframes barGrow{from{transform:scaleX(.2);opacity:.5}to{transform:none;opacity:1}}
+/* Le libellé de la semaine entre dans le sens de la navigation (ui/App.tsx).
+   Deux animations plutôt qu'une variable dans les images clés : le
+   compositeur n'a rien à résoudre. */
+@keyframes semaine-suivante{from{opacity:0;transform:translateX(14px)}}
+@keyframes semaine-precedente{from{opacity:0;transform:translateX(-14px)}}
+/* « Auj. » paraît (ui/App.tsx). */
+@keyframes auj-in{from{opacity:0;transform:scale(.7)}}
+/* Une fiche de chantier ouverte pendant qu'on regarde la liste
+   (ui/Chantiers.tsx), et l'écran de connexion qui change de mode
+   (ui/Gate.tsx). */
+@keyframes carte-in{from{opacity:0;transform:translateY(8px)}}
+/* Un toast entre, puis s'éteint (ui/bits.tsx) : « forwards » pour la
+   sortie seulement — il reste éteint jusqu'à son départ, 180 ms après. */
+@keyframes toast-in{from{opacity:0;transform:translateY(14px) scale(.96)}}
+@keyframes toast-out{to{opacity:0;transform:translateY(10px) scale(.97)}}
+/* Une rangée de « Composer », en cascade (ui/sheets.tsx). Avec
+   « backwards », comme pose-in, les deux seules entrées à délai : pendant
+   son délai, la rangée attend dans son état de départ, sinon elle
+   paraîtrait puis disparaîtrait avant d'entrer. Sans délai sous le
+   mouvement réduit. */
+@keyframes rangee-in{from{opacity:0;transform:translateX(-8px)}}
+/* Une barre de couverture, à l'ouverture de « Composer ». */
+@keyframes couverture-in{from{transform:scaleX(0)}}
+/* Un nom posé par « Répartir », dans la vague de la grille Semaine
+   (ui/Semaine.tsx) : « backwards », comme les rangées de « Composer ». */
+@keyframes pose-in{from{opacity:0;transform:scale(.5)}}

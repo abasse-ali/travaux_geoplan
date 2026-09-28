@@ -1,0 +1,16 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "lib": ["ES2023"],
+    "types": ["node"],
+    "jsx": "preserve",
+    "allowImportingTsExtensions": true,
+    /* L'API tourne sous Node sans compilation : Node retire les types
+       lui-même, et n'accepte donc que la syntaxe qui s'efface (pas
+       d'enum, pas de propriété de paramètre) et des imports de types
+       marqués comme tels. */
+    "erasableSyntaxOnly": true,
+    "verbatimModuleSyntax": true
+  },
+  "include": ["src", "tests", "vitest.config.ts", "drizzle.config.ts"]
+}

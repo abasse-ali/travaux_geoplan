@@ -1,0 +1,41 @@
+# ============================================================
+# Pour développer l'API sur la machine : seulement MySQL et Redis,
+# publiés sur des ports locaux. L'API tourne hors Docker :
+#
+#   docker compose -f infra/docker-compose.dev.yml up -d
+#   DATABASE_URL=mysql://geoplan:dev@127.0.0.1:3307/geoplan \
+#   REDIS_URL=redis://127.0.0.1:6380 APP_ORIGIN=http://localhost:5173 \
+#   npm run dev -w @geoplan/api
+#
+# Mots de passe de développement, sans valeur : ces conteneurs
+# n'écoutent que sur 127.0.0.1.
+# ============================================================
+
+name: geoplan-dev
+
+services:
+  mysql:
+    image: mysql:8.4
+    environment:
+      MYSQL_DATABASE: geoplan
+      MYSQL_USER: geoplan
+      MYSQL_PASSWORD: dev
+      MYSQL_ROOT_PASSWORD: dev-racine
+    command: ["--character-set-server=utf8mb4", "--default-time-zone=+00:00"]
+    ports: ["127.0.0.1:3307:3306"]
+    volumes: [mysql-dev:/var/lib/mysql]
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -pdev-racine --silent"]
+      interval: 5s
+      retries: 30
+
+  redis:
+    image: redis:7.4-alpine
+    ports: ["127.0.0.1:6380:6379"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      retries: 30
+
+volumes:
+  mysql-dev:

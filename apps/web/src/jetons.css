@@ -1,0 +1,120 @@
+/* ============================================================
+   Geoplan — jetons de dessin
+   Palette : béton clair, bleu de travail pour la donnée,
+   orange de bombe de traçage pour l'action, fuchsia pour l'urgence.
+   Les cinq corps de métier ont leur teinte, tirée des matériaux.
+
+   Une seule source : les variables ci-dessous, en clair puis en
+   sombre. Chaque couple texte / fond passe le seuil AA des WCAG
+   (npm run contrastes). Le thème Tailwind (@theme inline, en bas) ne fait que les
+   nommer pour les classes : bg-surface, text-ink, font-display…
+   Les teintes des métiers (--t-*) n'y figurent pas : c'est le domaine
+   qui dit quelle teinte va à quel métier (skColor, phaseColor), et les
+   composants la reçoivent par style, jamais par une classe écrite en dur.
+   --marque : l'orange du logo, celui de l'icône d'écran d'accueil
+   (tools/make-icons.ts). Il ne suit pas --accent, foncé d'un cran en W5
+   pour le texte blanc des boutons : un logo n'a pas de seuil à tenir.
+   ============================================================ */
+
+@layer base {
+  :root{
+    --ground:#EDEDEA; --surface:#FBFBF9; --surface-2:#F3F3F0; --surface-3:#E5E5E1;
+    --ink:#15171A; --ink-2:#474D55; --muted:#62676E;
+    --line:#DCDDD8; --line-2:#C8C9C3; --line-champ:#85887B;
+    --blue:#26476E; --on-blue:#FBFBF9;
+    --accent:#D04915; --accent-texte:#AB3B11; --on-accent:#FFFFFF;
+    --marque:#E24F17;
+    --urgence:#C60E6D; --ok:#347854; --warn:#A8701A;
+    --urgence-texte:#B20D62; --ok-texte:#2D6849; --warn-texte:#7F5414;
+    --t-elec:#9A6715; --t-plomb:#33739E; --t-platre:#6C737B; --t-peint:#7C5FA3; --t-menuis:#9A6835; --t-poly:#5A6068;
+    --shadow-1:0 1px 2px rgba(20,22,26,.05);
+    --shadow-2:0 2px 6px rgba(20,22,26,.09), 0 20px 40px -16px rgba(20,22,26,.5);
+    --shadow-3:0 18px 50px -12px rgba(20,22,26,.45);
+    --r:14px; --tabbar-h:54px;
+    --spring:cubic-bezier(.34,1.28,.44,1);
+    --fd:"Archivo","Helvetica Neue",Arial,sans-serif;
+    --fb:"Public Sans","Helvetica Neue",Arial,sans-serif;
+    --fm:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,monospace;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{
+      --ground:#131519; --surface:#1B1E23; --surface-2:#23272D; --surface-3:#2C3138;
+      --ink:#ECEDE9; --ink-2:#B7BDC4; --muted:#9398A0;
+      --line:#2C3138; --line-2:#3C424A; --line-champ:#66717E;
+      --blue:#8FB4E0; --on-blue:#131519;
+      --accent:#FF7A45; --accent-texte:#FF7A45; --on-accent:#1B0B03;
+      --marque:#FF7A45;
+      --urgence:#FF57A8; --ok:#5FBE86; --warn:#E0A94E;
+      --urgence-texte:#FF66B0; --ok-texte:#5FBE86; --warn-texte:#E0A94E;
+      --t-elec:#DFA84E; --t-plomb:#6FA9CE; --t-platre:#A3AAB2; --t-peint:#A98BC9; --t-menuis:#C08E58; --t-poly:#8A9199;
+      --shadow-1:0 1px 2px rgba(0,0,0,.4);
+      --shadow-2:0 2px 5px rgba(0,0,0,.5), 0 16px 34px -14px rgba(0,0,0,.9);
+      --shadow-3:0 18px 50px -12px rgba(0,0,0,.8);
+    }
+  }
+}
+
+/* Les noms que voient les classes. Seuls les jetons du dessin : les
+   espacements restent ceux de Tailwind (pas de 4 px, p-2.25 = 9 px ; figé
+   en bas de ce bloc), et
+   les tailles de texte, réglées une à une, s'écrivent telles quelles
+   (text-[11.5px]). Palette, polices et ombres par défaut de Tailwind
+   retirées : une couleur hors palette ne s'écrit pas par mégarde. */
+@theme inline {
+  --color-*: initial;
+  --color-ground: var(--ground);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-line-2: var(--line-2);
+  --color-blue: var(--blue);
+  --color-on-blue: var(--on-blue);
+  --color-accent: var(--accent);
+  --color-on-accent: var(--on-accent);
+  --color-urgence: var(--urgence);
+  --color-ok: var(--ok);
+  --color-warn: var(--warn);
+  /* En texte, jamais accent, ok, warn ou urgence : leurs variantes
+     -texte, assez foncées (en clair) pour le seuil AA, sur les fonds
+     comme sur leur propre teinte (un badge). npm run contrastes. */
+  --color-accent-texte: var(--accent-texte);
+  --color-ok-texte: var(--ok-texte);
+  --color-warn-texte: var(--warn-texte);
+  --color-urgence-texte: var(--urgence-texte);
+  /* Le contour d'un champ, d'une case, d'un interrupteur : ce qui fait
+     voir le contrôle, au moins 3:1 sur son fond (les filets des cartes,
+     line et line-2, sont décoratifs). */
+  --color-line-champ: var(--line-champ);
+
+  --font-*: initial;
+  --font-display: var(--fd);
+  --font-body: var(--fb);
+  --font-mono: var(--fm);
+
+  --shadow-*: initial;
+  --shadow-carte: var(--shadow-1);
+  --shadow-feuille: var(--shadow-3);
+  /* L'ombre de l'îlot (--shadow-2) s'écrit en propriété directe
+     ([box-shadow:var(--shadow-2)], ui/Island.tsx) : pas d'alias. */
+
+  --radius-carte: var(--r);
+  --animate-*: initial;
+
+  /* Les valeurs par défaut de Tailwind que citent les classes, les mêmes,
+     mais écrites en dur dans chaque règle (inline) : sinon chaque marge
+     vaut calc(var(--spacing) * n) et chaque transition
+     var(--tw-ease, var(--default-…)), que le navigateur résout à chaque
+     restyle de l'élément. Mesuré sur un changement de jour (journal,
+     W5 ; ADR-005, « Le prix d'un restyle »). */
+  --spacing: 0.25rem;
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  --default-transition-duration: 150ms;
+  --default-transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}

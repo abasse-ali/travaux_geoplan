@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mes disponibilités — Geoplan</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#EDEDEA" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#131519" media="(prefers-color-scheme: dark)">
+<link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
+<link rel="icon" href="./icons/favicon-64.png" sizes="64x64">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700&family=IBM+Plex+Mono:wght@500;600&family=Public+Sans:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="./styles.css">
+<style>
+/* Page autonome : un seul écran, gros boutons, aucune navigation. */
+body{overflow:auto}
+.rep{
+  max-width:430px;margin-inline:auto;min-height:100vh;
+  padding:26px 20px calc(28px + env(safe-area-inset-bottom));
+  display:flex;flex-direction:column;gap:20px;background:var(--ground);
+}
+@supports(min-height:100dvh){.rep{min-height:100dvh}}
+.rep .mark{width:42px;height:42px;border-radius:11px;margin-bottom:16px}
+.rep .mark svg{width:28px;height:28px}
+.rep h1{margin:0 0 6px;font:700 25px/1.15 var(--fd);letter-spacing:-.02em}
+.rep .lead{margin:0;font-size:14px;line-height:1.55;color:var(--muted)}
+.rep .week{
+  display:inline-flex;align-items:center;gap:8px;margin-top:14px;
+  padding:8px 12px;border-radius:10px;background:var(--surface);border:1px solid var(--line);
+  font:600 14px/1 var(--fm);
+}
+.rep .week em{font:600 9.5px/1 var(--fd);letter-spacing:.11em;text-transform:uppercase;
+  color:var(--muted);font-style:normal}
+
+.grid5{display:flex;flex-direction:column;gap:8px}
+.dayrow{
+  display:flex;align-items:center;gap:13px;width:100%;
+  padding:15px 16px;border-radius:13px;
+  border:1.5px solid var(--line-2);background:var(--surface);
+  font:600 16px/1 var(--fb);color:var(--ink);text-align:left;
+}
+.dayrow .dt{flex:1}
+.dayrow .num{font:500 13px/1 var(--fm);color:var(--muted)}
+.dayrow .box{
+  width:26px;height:26px;flex:none;border-radius:8px;
+  border:1.5px solid var(--line-2);background:var(--surface-2);
+  display:grid;place-items:center;
+}
+.dayrow .box svg{width:15px;height:15px;stroke:var(--on-accent);fill:none;
+  stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round;opacity:0}
+.dayrow[aria-pressed="true"]{border-color:var(--accent);
+  background:color-mix(in srgb,var(--accent) 9%,var(--surface))}
+.dayrow[aria-pressed="true"] .box{background:var(--accent);border-color:transparent}
+.dayrow[aria-pressed="true"] .box svg{opacity:1}
+.dayrow[aria-pressed="true"] .num{color:var(--accent)}
+.dayrow.we{background:transparent;border-style:dashed}
+.dayrow.we[aria-pressed="true"]{border-style:solid;
+  background:color-mix(in srgb,var(--accent) 9%,var(--surface))}
+
+.rep textarea{
+  width:100%;min-height:72px;resize:vertical;padding:12px;border-radius:11px;
+  border:1px solid var(--line-2);background:var(--surface);
+  font:400 16px/1.45 var(--fb);
+}
+.rep .send{padding:15px;font-size:16px;border-radius:12px}
+.rep .foot{font-size:11.5px;color:var(--muted);text-align:center;line-height:1.5}
+.state{
+  padding:16px;border-radius:13px;background:var(--surface);
+  border-left:3px solid var(--ok);font-size:14.5px;line-height:1.55;color:var(--ink-2);
+}
+.state.err{border-left-color:var(--urgence)}
+.state b{color:var(--ink)}
+.center{display:flex;flex-direction:column;justify-content:center;flex:1;gap:14px}
+</style>
+</head>
+<body>
+<main class="rep" id="rep">
+  <p class="lead">Chargement…</p>
+</main>
+<script type="module" src="./js/dispo.js"></script>
+</body>
+</html>

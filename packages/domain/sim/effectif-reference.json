@@ -1,0 +1,393 @@
+{
+  "app": "geoplan",
+  "v": 1,
+  "exportedAt": "2026-09-06T20:42:39.062Z",
+  "people": [
+    {
+      "id": "p_geoffrey",
+      "name": "Geoffrey",
+      "phone": "",
+      "email": "",
+      "days": [
+        true,
+        true,
+        true,
+        true,
+        false,
+        false,
+        false
+      ],
+      "permis": true,
+      "sk": {
+        "elec": 5,
+        "plomb": 2,
+        "platre": 4,
+        "peint": 4,
+        "menuis": 3
+      },
+      "note": "Référent électricité — disponibilité à confirmer"
+    },
+    {
+      "id": "p_morgan",
+      "name": "Morgan",
+      "phone": "",
+      "email": "",
+      "days": [
+        true,
+        true,
+        true,
+        true,
+        false,
+        false,
+        false
+      ],
+      "permis": true,
+      "sk": {
+        "elec": 3,
+        "plomb": 5,
+        "platre": 4,
+        "peint": 4,
+        "menuis": 4
+      },
+      "note": "Référent plomberie — disponibilité à confirmer"
+    },
+    {
+      "id": "p_erwan",
+      "name": "Erwan",
+      "phone": "",
+      "email": "",
+      "days": [
+        true,
+        true,
+        true,
+        true,
+        false,
+        false,
+        false
+      ],
+      "permis": true,
+      "sk": {
+        "elec": 2,
+        "plomb": 2,
+        "platre": 3,
+        "peint": 4,
+        "menuis": 3
+      },
+      "note": "Bras droit — polyvalent avancé"
+    },
+    {
+      "id": "p_quentin",
+      "name": "Quentin",
+      "phone": "",
+      "email": "",
+      "days": [
+        true,
+        true,
+        true,
+        false,
+        false,
+        false,
+        false
+      ],
+      "permis": false,
+      "sk": {
+        "elec": 2,
+        "plomb": 2,
+        "platre": 3,
+        "peint": 3,
+        "menuis": 5
+      },
+      "note": "Expert fenêtre, menuiserie, cuisine"
+    },
+    {
+      "id": "p_aklan",
+      "name": "Aklan",
+      "phone": "",
+      "email": "",
+      "days": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        false,
+        false
+      ],
+      "permis": true,
+      "sk": {
+        "elec": 2,
+        "plomb": 1,
+        "platre": 2,
+        "peint": 2,
+        "menuis": 2
+      },
+      "note": "Bras gauche — polyvalent léger"
+    },
+    {
+      "id": "p_giorgi",
+      "name": "Giorgi",
+      "phone": "",
+      "email": "",
+      "days": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        false,
+        false
+      ],
+      "permis": false,
+      "sk": {
+        "elec": 2,
+        "plomb": 1,
+        "platre": 2,
+        "peint": 2,
+        "menuis": 2
+      },
+      "note": "Polyvalent moyen"
+    },
+    {
+      "id": "p_nixon",
+      "name": "Nixon",
+      "phone": "",
+      "email": "",
+      "days": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        false,
+        false
+      ],
+      "permis": false,
+      "sk": {
+        "elec": 1,
+        "plomb": 1,
+        "platre": 2,
+        "peint": 1,
+        "menuis": 1
+      },
+      "note": "Novice"
+    },
+    {
+      "id": "p_sydney",
+      "name": "Sydney",
+      "phone": "",
+      "email": "",
+      "days": [
+        true,
+        true,
+        true,
+        true,
+        false,
+        false,
+        false
+      ],
+      "permis": false,
+      "sk": {
+        "elec": 1,
+        "plomb": 1,
+        "platre": 2,
+        "peint": 1,
+        "menuis": 1
+      },
+      "note": ""
+    },
+    {
+      "id": "p_luidgi",
+      "name": "Luidgi",
+      "phone": "",
+      "email": "",
+      "days": [
+        true,
+        true,
+        true,
+        true,
+        false,
+        false,
+        false
+      ],
+      "permis": false,
+      "sk": {
+        "elec": 1,
+        "plomb": 1,
+        "platre": 2,
+        "peint": 1,
+        "menuis": 1
+      },
+      "note": "Disponibilité à confirmer"
+    },
+    {
+      "id": "p_amir",
+      "name": "Amir",
+      "phone": "",
+      "email": "",
+      "days": [
+        true,
+        true,
+        true,
+        true,
+        false,
+        false,
+        false
+      ],
+      "permis": false,
+      "sk": {
+        "elec": 1,
+        "plomb": 1,
+        "platre": 1,
+        "peint": 1,
+        "menuis": 1
+      },
+      "note": "Disponibilité à confirmer"
+    },
+    {
+      "id": "p_chaggy",
+      "name": "Chaggy",
+      "phone": "",
+      "email": "",
+      "days": [
+        false,
+        true,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "permis": false,
+      "sk": {
+        "elec": 1,
+        "plomb": 1,
+        "platre": 2,
+        "peint": 1,
+        "menuis": 1
+      },
+      "note": "1 jour par semaine"
+    },
+    {
+      "id": "p_mojtaba",
+      "name": "Mojtaba",
+      "phone": "",
+      "email": "",
+      "days": [
+        false,
+        false,
+        true,
+        false,
+        false,
+        false,
+        false
+      ],
+      "permis": false,
+      "sk": {
+        "elec": 1,
+        "plomb": 1,
+        "platre": 2,
+        "peint": 1,
+        "menuis": 1
+      },
+      "note": "1 jour par semaine"
+    },
+    {
+      "id": "p_kia",
+      "name": "Kia",
+      "phone": "",
+      "email": "",
+      "days": [
+        false,
+        false,
+        false,
+        true,
+        false,
+        false,
+        false
+      ],
+      "permis": false,
+      "sk": {
+        "elec": 1,
+        "plomb": 1,
+        "platre": 2,
+        "peint": 1,
+        "menuis": 1
+      },
+      "note": "1 jour par semaine — niveaux à confirmer"
+    }
+  ],
+  "sites": [
+    {
+      "id": "s_9md49",
+      "code": "9MD49",
+      "addr": "9 Mont Doré — apt 49",
+      "start": "2026-08-31",
+      "months": 2,
+      "coef": 1,
+      "ph": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "note": "",
+      "plan": {}
+    },
+    {
+      "id": "s_12ab49",
+      "code": "12AB49",
+      "addr": "12 Audibert — apt 49",
+      "start": "2026-08-31",
+      "months": 2,
+      "coef": 1,
+      "ph": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "note": "",
+      "plan": {}
+    },
+    {
+      "id": "s_30ja90",
+      "code": "30JA90",
+      "addr": "30 Jules Amilhau — apt 90",
+      "start": "2026-08-31",
+      "months": 2,
+      "coef": 1,
+      "ph": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "note": "",
+      "plan": {}
+    }
+  ]
+}

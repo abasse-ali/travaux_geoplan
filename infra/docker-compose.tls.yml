@@ -1,0 +1,11 @@
+# Surcouche de production : nginx en https avec le certificat d'origine
+# Cloudflare (voir infra/deploy/README.md, étape 3).
+#
+#   docker compose -f docker-compose.yml -f docker-compose.tls.yml up -d --build
+services:
+  nginx:
+    ports:
+      - "443:443"
+    volumes:
+      - ./nginx/tls:/etc/nginx/tls:ro
+      - ./nginx/geoplan-tls.conf:/etc/nginx/conf.d/geoplan-tls.conf:ro

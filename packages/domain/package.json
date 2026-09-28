@@ -1,0 +1,12 @@
+{
+  "name": "@geoplan/domain",
+  "version": "3.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Le métier de Geoplan : étapes, calendrier, besoin, composition, répartition. Aucune dépendance, aucune E/S.",
+  "exports": {
+    ".": "./src/domain.ts",
+    "./operations": "./src/operations.ts",
+    "./sim": "./sim/scenario.ts"
+  }
+}

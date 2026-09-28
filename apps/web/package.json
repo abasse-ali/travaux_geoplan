@@ -1,0 +1,37 @@
+{
+  "name": "@geoplan/web",
+  "version": "3.0.0",
+  "private": true,
+  "type": "module",
+  "description": "L’application de Geoffrey et la page de réponse des compagnons.",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -p . && vite build",
+    "preview": "vite preview",
+    "test:e2e": "playwright test --project=iphone --project=pwa",
+    "test:e2e:api": "node e2e/source.mjs api",
+    "test:e2e:supabase": "node e2e/source.mjs supabase",
+    "test:captures": "playwright test --project=captures"
+  },
+  "dependencies": {
+    "@geoplan/domain": "3.0.0",
+    "@radix-ui/react-switch": "1.3.7",
+    "@radix-ui/react-tabs": "1.1.21",
+    "@supabase/supabase-js": "2.112.4",
+    "@tanstack/react-query": "5.104.0",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "socket.io-client": "4.8.4",
+    "vaul": "1.1.2",
+    "zustand": "5.0.15"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "4.3.3",
+    "@types/react": "19.2.18",
+    "@types/react-dom": "19.2.7",
+    "@vitejs/plugin-react": "4.3.4",
+    "tailwindcss": "4.3.3",
+    "vite": "6.0.7",
+    "vite-plugin-pwa": "0.21.1"
+  }
+}

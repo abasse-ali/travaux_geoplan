@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Geoplan — chantiers</title>
+<meta name="description" content="Affectation des compagnons aux chantiers : 12 étapes, compétences, composition d'équipe.">
+
+<meta name="theme-color" content="#EDEDEA" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#131519" media="(prefers-color-scheme: dark)">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Geoplan">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
+<link rel="icon" href="./icons/favicon-64.png" sizes="64x64">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700&family=IBM+Plex+Mono:wght@500;600&family=Public+Sans:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+
+<div class="app">
+  <header class="topbar">
+    <div class="mark"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="6" width="16" height="3.2" rx="1.6" fill="var(--accent)"/><rect x="4" y="10.9" width="11.5" height="3.2" rx="1.6" fill="currentColor"/><rect x="4" y="15.8" width="7" height="3.2" rx="1.6" fill="currentColor"/></svg></div>
+    <div class="brand">
+      <h1>Geoplan</h1>
+      <p id="topsub">Chargement…</p>
+    </div>
+    <button class="status busy" id="statusBtn" aria-label="État des données">
+      <span class="sdot"></span><span id="statusTxt">…</span>
+    </button>
+    <button class="icon-btn primary" id="addBtn" aria-label="Ajouter">+</button>
+  </header>
+
+  <div class="banner" id="banner" hidden>
+    <span><b>Mode local</b> — les données restent sur cet appareil.
+    Renseignez <code>config.js</code> pour les synchroniser.</span>
+  </div>
+
+  <div class="banner ask" id="autoAsk" hidden></div>
+
+  <div class="weekbar">
+    <button class="wk-nav" id="wkPrev" aria-label="Semaine précédente">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5 8 12l7 7"/></svg>
+    </button>
+    <div class="wk-lbl" id="wkLbl"><b>&nbsp;</b></div>
+    <button class="wk-nav" id="wkNext" aria-label="Semaine suivante">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg>
+    </button>
+    <button class="wk-today" id="wkToday" hidden>Auj.</button>
+  </div>
+
+  <div class="daybar" id="daybar" role="tablist" aria-label="Jour affiché"></div>
+
+  <main class="scroll" id="view"></main>
+
+  <!-- Un seul élément, qui se déforme entre la pastille et le panneau. -->
+  <section class="island" id="vivier" data-state="open">
+    <button class="island-face" id="vivierFace" aria-label="Ouvrir le vivier">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><path d="M2.6 20a6.4 6.4 0 0 1 12.8 0"/><path d="M16.4 6.3a3 3 0 0 1 0 5.4M17.8 20a6.4 6.4 0 0 0-2-4.5"/></svg>
+      <b id="bubbleN">0</b>
+      <span class="lab">Vivier</span>
+    </button>
+
+    <div class="island-full" id="vivierFull">
+      <div class="island-head">
+        <button class="island-grab" id="vivierHead" aria-expanded="true">
+          <span class="eyebrow" id="vivierLbl">Vivier</span>
+        </button>
+        <label class="switch">
+          <input type="checkbox" id="urgSw">
+          <span class="track"></span>
+          <span class="lab">Urgence</span>
+        </label>
+        <button class="island-min" id="vivierMin" aria-label="Réduire le vivier">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 10 6 6 6-6"/></svg>
+        </button>
+      </div>
+      <div class="chips" id="pool"></div>
+    </div>
+  </section>
+
+  <nav class="tabbar" role="tablist">
+    <button role="tab" data-tab="chantiers" aria-selected="true">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 21h18M5 21V9l7-5 7 5v12M9.5 21v-6h5v6"/></svg>
+      Chantiers
+    </button>
+    <button role="tab" data-tab="semaine" aria-selected="false">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4M8.5 14h1.5M14 14h1.5M8.5 17.5h1.5M14 17.5h1.5"/></svg>
+      Semaine
+    </button>
+    <button role="tab" data-tab="equipe" aria-selected="false">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><path d="M2.6 20a6.4 6.4 0 0 1 12.8 0"/><path d="M16.4 6.3a3 3 0 0 1 0 5.4M17.8 20a6.4 6.4 0 0 0-2-4.5"/></svg>
+      Équipe
+    </button>
+  </nav>
+</div>
+
+<div class="gate" id="gate" hidden></div>
+<div id="sheetRoot"></div>
+<div id="ghost" class="ghost" hidden></div>
+<div id="toastRoot"></div>
+
+<script type="module" src="./js/app.js"></script>
+</body>
+</html>

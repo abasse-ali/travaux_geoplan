@@ -1,0 +1,35 @@
+/* ============================================================
+   Ce que useDrag pose en classes, hors de React, pendant un glisser
+   (ui/useDrag.ts) : le survol d'une zone de dépôt (.zone.over, .urg),
+   la puce soulevée (.chip.lifted), l'îlot du vivier survolé
+   (#vivier.over), et la puce d'arrivée pendant le vol du fantôme
+   (.chip.atterrit).
+
+   Tout le reste de l'interface est en classes Tailwind (ADR-005). Ces
+   états-là ne peuvent pas l'être : écrits en variantes ([&.over]:…), les
+   mots « over », « urg », « lifted » seraient dans l'attribut class au
+   repos, là où les tests lisent l'état. Et le fond au repos de la zone
+   et de l'îlot vit ici avec eux : en classe, il l'emporterait toujours
+   sur son état survolé (la couche des classes passe après celle-ci).
+   Marges, rayons, traits en tirets pendant un glisser : en classes.
+   ============================================================ */
+
+/* La zone de dépôt d'un chantier (ui/Chantiers.tsx). Survolée en
+   urgence, le rose est mêlé à 11 % et non 13 : son titre gris y garde le
+   contraste AA (4,57 ; npm run contrastes). */
+.zone{border:1.5px dashed var(--line-2);background:var(--surface-2);transition:background .14s,border-color .14s}
+.zone.over{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 13%,var(--surface));border-style:solid}
+.zone.over.urg{border-color:var(--urgence);background:color-mix(in srgb,var(--urgence) 11%,var(--surface))}
+
+/* Toute puce qu'on soulève (dessin : ui/puce.ts). !important : Framer
+   Motion écrit en ligne l'opacité de la puce (1, fin de son entrée), qui
+   l'emportait — la puce soulevée ne s'estompait pas (constat V3). */
+.chip.lifted{opacity:.3 !important}
+/* La puce d'arrivée, le temps que le fantôme vienne s'y poser : c'est lui
+   qui devient elle (ui/mouvement/atterrissage.ts, W6). Après .lifted : une
+   puce reposée dans sa propre zone passe de l'une à l'autre. */
+.chip.atterrit{opacity:0 !important}
+
+/* L'îlot du vivier (ui/Island.tsx). */
+.island{background:color-mix(in srgb,var(--surface) 86%,transparent)}
+.island.over{background:color-mix(in srgb,var(--accent) 12%,var(--surface))}

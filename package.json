@@ -1,0 +1,39 @@
+{
+  "name": "geoplan",
+  "version": "3.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Affectation des compagnons aux chantiers, jour par jour.",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev -w @geoplan/web",
+    "build": "npm run build -w @geoplan/web",
+    "preview": "npm run preview -w @geoplan/web",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "npm run test:e2e -w @geoplan/web",
+    "sim": "node --disable-warning=ExperimentalWarning tools/sim/run.ts",
+    "measure": "node --disable-warning=ExperimentalWarning tools/measure.ts",
+    "verifier-css": "node --disable-warning=ExperimentalWarning tools/verifier-css.ts",
+    "contrastes": "node --disable-warning=ExperimentalWarning tools/contrastes.ts",
+    "typecheck": "tsc -p packages/domain && tsc -p apps/web && tsc -p apps/web/tsconfig.e2e.json && tsc -p apps/api && tsc -p tools",
+    "seed": "node --disable-warning=ExperimentalWarning tools/make-seed.ts",
+    "icons": "node --disable-warning=ExperimentalWarning tools/make-icons.ts",
+    "test:e2e:api": "npm run test:e2e:api -w @geoplan/web",
+    "test:e2e:supabase": "npm run test:e2e:supabase -w @geoplan/web",
+    "images-perdues": "node --disable-warning=ExperimentalWarning tools/images-perdues.ts",
+    "test:captures": "npm run test:captures -w @geoplan/web"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.63.0",
+    "@types/node": "26.4.1",
+    "@vitest/coverage-v8": "4.1.11",
+    "drizzle-orm": "0.45.3",
+    "fast-check": "4.10.2",
+    "typescript": "7.0.2",
+    "vitest": "4.1.11"
+  }
+}

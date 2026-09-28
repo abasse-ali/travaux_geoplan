@@ -1,0 +1,3 @@
+# Fins de ligne normalisées : le dépôt en LF, la copie de travail selon l'OS.
+* text=auto eol=lf
+*.png binary

@@ -1,0 +1,21 @@
+/* Feuille de l'application (ADR-005). Ordre des couches : les jetons et
+   la remise à zéro, puis les états que le glisser pose hors de React
+   (etats.css), puis les classes de Tailwind. Tout le dessin est en
+   classes ; les @keyframes sont dans mouvement.css, le mouvement réduit
+   dans mouvement-commun.css (partagé avec la page compagnon). Pas de
+   « preflight » : base.css a sa propre remise à zéro. Tailwind ne lit
+   que src/ (ni les tests, ni les outils). */
+@layer theme, base, etats, utilities;
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities) source("./");
+/* Des mots du code qui ne sont pas des classes : Tailwind lit tout src/,
+   code et commentaires compris, et en ferait des règles mortes (npm run
+   verifier-css, garde-fou 4). static : un mot-clé des classes
+   JavaScript ; table : un nom de variable ; transform, transition,
+   invisible : des mots de commentaires. */
+@source not inline("static table transform transition invisible");
+@import "./jetons.css";
+@import "./base.css";
+@import "./mouvement-commun.css";
+@import "./mouvement.css";
+@import "./etats.css" layer(etats);

@@ -1,0 +1,13 @@
+node_modules/
+.DS_Store
+*.log
+.vscode/*
+!.vscode/extensions.json
+outillage.txt
+prompt.txt
+
+# Décommentez si vous préférez ne pas versionner vos clés Supabase.
+# La clé publiable est publique par construction et se retrouve de toute
+# façon dans le paquet servi : la garder ici ne pose de problème que si le
+# dépôt est public ET que les inscriptions ne sont pas fermées.
+# src/config.js

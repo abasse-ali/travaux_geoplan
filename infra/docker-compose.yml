@@ -1,0 +1,91 @@
+# ============================================================
+# Geoplan, la pile complète : MySQL, Redis, l'API, nginx.
+#
+#   cd infra && cp .env.example .env   (puis remplir .env)
+#   docker compose up -d --build
+#   curl http://localhost:8080/api/health
+#
+# Les secrets ne vivent que dans .env, jamais dans ce fichier ni dans le
+# dépôt. Chaque service a un contrôle de santé ; l'API attend MySQL et
+# Redis, nginx attend l'API.
+# ============================================================
+
+name: geoplan
+
+services:
+  mysql:
+    image: mysql:8.4
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: geoplan
+      MYSQL_USER: geoplan
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:?à définir dans infra/.env}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?à définir dans infra/.env}
+      TZ: UTC
+    command: ["--character-set-server=utf8mb4", "--collation-server=utf8mb4_0900_ai_ci", "--default-time-zone=+00:00"]
+    volumes:
+      - mysql:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p\"$$MYSQL_ROOT_PASSWORD\" --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 20s
+
+  redis:
+    image: redis:7.4-alpine
+    restart: unless-stopped
+    # Les sessions et les identifiants de mutations doivent survivre à un
+    # redémarrage : sinon Geoffrey devrait se reconnecter.
+    command: ["redis-server", "--appendonly", "yes", "--save", "60", "1"]
+    volumes:
+      - redis:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+  api:
+    build:
+      context: ..
+      dockerfile: apps/api/Dockerfile
+    restart: unless-stopped
+    # L'arrêt propre attend les requêtes en cours (10 s au plus) et la
+    # fin d'une relance du samedi. Les 10 s de Docker par défaut
+    # couperaient une relance en plein envoi : un e-mail parti sans que
+    # son envoi soit noté repartirait à la relance suivante.
+    stop_grace_period: 30s
+    environment:
+      NODE_ENV: ${NODE_ENV:-production}
+      DATABASE_URL: mysql://geoplan:${MYSQL_PASSWORD}@mysql:3306/geoplan
+      REDIS_URL: redis://redis:6379
+      APP_ORIGIN: ${APP_ORIGIN:?à définir dans infra/.env}
+      TRUST_PROXY: ${TRUST_PROXY:-1}
+      MAIL_MODE: ${MAIL_MODE:-a-blanc}
+      BREVO_API_KEY: ${BREVO_API_KEY:-}
+      MAIL_FROM: ${MAIL_FROM:-}
+      MAIL_FROM_NAME: ${MAIL_FROM_NAME:-Geoplan}
+      MAIL_REPLY_TO: ${MAIL_REPLY_TO:-}
+      RAPPEL_ACTIF: ${RAPPEL_ACTIF:-true}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+    depends_on:
+      mysql: { condition: service_healthy }
+      redis: { condition: service_healthy }
+
+  nginx:
+    build:
+      context: ..
+      dockerfile: infra/nginx/Dockerfile
+    restart: unless-stopped
+    # Le port http n'est publié que sur la machine elle-même : Docker
+    # ouvre ses ports publiés sans passer par ufw. En production, le
+    # public n'entre que par 443 (docker-compose.tls.yml).
+    ports:
+      - "${HTTP_BIND:-127.0.0.1}:${HTTP_PORT:-8080}:80"
+    depends_on:
+      api: { condition: service_healthy }
+
+volumes:
+  mysql:
+  redis:
