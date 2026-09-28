@@ -2,8 +2,8 @@
 
 import { expect, test, type Page } from "@playwright/test";
 import {
-  S12, S9, TODAY, carte, effectifAvec, feuille, glisser, glisserDansLaPage, montrerZone, openLocal, poser, puceSur,
-  puceVivier, survolerLeVivier, toastsVus, vivier, vuToast, zone
+  IDX_AUJ, S12, S9, TODAY, carte, effectifAvec, feuille, glisser, glisserDansLaPage, jours, montrerZone, onglet, openLocal,
+  poser, puceSur, puceVivier, survolerLeVivier, toastsVus, vivier, vuToast, zone
 } from "./helpers";
 
 test.describe.configure({ timeout: 60_000 });
@@ -22,6 +22,83 @@ const animationDuToast = (page: Page): Promise<{ nom: string; duree: string }> =
   const s = getComputedStyle(t);
   return { nom: s.animationName, duree: s.animationDuration };
 });
+
+/* Tout ce qui bouge pendant un tour des gestes (porte de W6) : une
+   animation ou une transition CSS de plus de 1 ms, ou retardée de plus
+   de 1 ms (la règle du mouvement réduit ramène les durées à 0,01 ms, pas
+   les délais), et chaque animation jouée par script (Web Animations,
+   qui échappe à la règle). Noté dès l'ouverture de la page. */
+async function noterLesMouvements(page: Page): Promise<void> {
+  await page.addInitScript(() => {
+    const w = window as unknown as { __mouvements: string[] };
+    w.__mouvements = [];
+    const ms = (v: string) => v.endsWith("ms") ? parseFloat(v) : parseFloat(v) * 1000;
+    const nom = (el: Element) => el.getAttribute("aria-label") ?? el.getAttribute("role")
+      ?? (el.id ? "#" + el.id : el.tagName.toLowerCase());
+    const animer = Element.prototype.animate;
+    Element.prototype.animate = function (this: Element, ...args: Parameters<Element["animate"]>) {
+      const a = animer.apply(this, args);
+      const d = a.effect?.getComputedTiming().duration;
+      if (typeof d === "number" && d > 1) w.__mouvements.push(`script ${Math.round(d)} ms @ ${nom(this)}`);
+      return a;
+    };
+    const css = (e: AnimationEvent | TransitionEvent, sorte: "animation" | "transition") => {
+      const el = e.target as Element;
+      const s = getComputedStyle(el, e.pseudoElement || null);
+      const cle = sorte === "animation" ? (e as AnimationEvent).animationName : (e as TransitionEvent).propertyName;
+      const noms = (sorte === "animation" ? s.animationName : s.transitionProperty).split(", ");
+      const i = Math.max(0, noms.indexOf(cle) >= 0 ? noms.indexOf(cle) : noms.indexOf("all"));
+      const lu = (v: string) => { const l = v.split(", "); return ms(l[i % l.length]!); };
+      const duree = lu(sorte === "animation" ? s.animationDuration : s.transitionDuration);
+      const delai = lu(sorte === "animation" ? s.animationDelay : s.transitionDelay);
+      if (duree > 1 || delai > 1)
+        w.__mouvements.push(`${sorte} ${cle} ${Math.round(duree)} ms (+${Math.round(delai)}) @ ${nom(el)}`);
+    };
+    document.addEventListener("animationstart", e => css(e, "animation"), true);
+    document.addEventListener("transitionrun", e => css(e, "transition"), true);
+  });
+}
+
+/* Chaque geste qui déclenchait un mouvement, une fois : le jour, la
+   semaine, « Auj. », les onglets, le vivier replié puis rouvert, les
+   étapes, une mission, poser (le vol du fantôme, les toasts), retirer
+   (le vivier qui se gonfle), une feuille (« Composer » et sa cascade),
+   « Répartir » et sa vague. */
+async function tourDesGestes(page: Page): Promise<string[]> {
+  await noterLesMouvements(page);
+  await openLocal(page, effectifAvec(e => poser(e, S9, TODAY, ["p_giorgi"])));
+  await jours(page).nth(IDX_AUJ + 1).click();
+  await jours(page).nth(IDX_AUJ).click();
+  await page.getByRole("button", { name: "Semaine suivante" }).click();
+  await page.getByRole("button", { name: "Auj." }).click();
+  await page.getByRole("button", { name: "Semaine précédente" }).click();
+  await page.getByRole("button", { name: "Semaine suivante" }).click();
+  await onglet(page, "Équipe").click();
+  await onglet(page, "Chantiers").click();
+  await vivier(page).getByRole("button", { name: "Réduire le vivier" }).click();
+  await vivier(page).getByRole("button", { name: /^Ouvrir le vivier/ }).click();
+  const c = carte(page, S9);
+  await c.getByRole("button", { name: /^Les 12 étapes/ }).click();
+  await c.getByRole("list").getByRole("button").first().click();
+  await montrerZone(page, S12);
+  await glisserDansLaPage(page, '#vivier [data-name="Nixon"]', `[data-drop="${S12}"]`);
+  await montrerZone(page, S9);
+  await survolerLeVivier(page, '[data-drop] [data-name="Giorgi"]');
+  await montrerZone(page, S9);
+  await zone(page, S9).getByRole("button", { name: "Composer" }).click();
+  const composition = feuille(page, "Composition · 9MD49");
+  await expect(composition).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(composition).toBeHidden();
+  await onglet(page, "Semaine").click();
+  await page.getByRole("button", { name: "Répartir toute l'équipe sur la semaine" }).click();
+  const repartir = feuille(page, "Répartir la semaine");
+  await expect(repartir).toBeVisible();
+  await repartir.getByRole("button", { name: "Appliquer ce plan" }).click();
+  await expect(repartir).toBeHidden();
+  await page.waitForTimeout(1_200);            // la vague : 250 ms, puis un nom toutes les 30 à 70 ms
+  return page.evaluate(() => (window as unknown as { __mouvements: string[] }).__mouvements);
+}
 
 test.describe("K3 — prefers-reduced-motion", () => {
   test.use({ reducedMotion: "reduce" });
@@ -96,6 +173,32 @@ test.describe("K3 — prefers-reduced-motion", () => {
     expect(a.nom).toBe("toast-in");
     expect(parseFloat(a.duree)).toBeLessThan(0.001);
   });
+
+  test("K3 — un tour des gestes : rien ne bouge", async ({ page }) => {
+    /* La porte de W6 : tout le décoratif coupé, d'où qu'il vienne. Chaque
+       test K3 ci-dessus vise un mouvement ; celui-ci note tout ce qui
+       bouge pendant un tour de chaque geste qui en déclenchait un, y
+       compris ce qu'on aurait oublié. Témoin : le même tour, sans le
+       mouvement réduit (juste après ce bloc). */
+    test.setTimeout(120_000);
+    expect(await tourDesGestes(page)).toEqual([]);
+  });
+});
+
+test("K3 — témoin : sans le mouvement réduit, le même tour bouge, par chaque mécanisme", async ({ page }) => {
+  test.setTimeout(120_000);
+  const mouvements = await tourDesGestes(page);
+  /* « animation <nom> », « transition <propriété> », « script <durée> » :
+     les sortes de mouvement que le tour doit croiser. */
+  const sortes = new Set(mouvements.map(m => m.split(" ").slice(0, 2).join(" ")));
+  const attendues = [
+    "animation semaine-suivante", "animation semaine-precedente", "animation auj-in", "animation fade",
+    "animation tickIn", "animation toast-in", "animation rangee-in", "animation pose-in",
+    "transition transform",                        // la pastille du jour
+    "script 280", "script 400", "script 260",      // le trait sous l'onglet, la forme du vivier, un volet
+    "script 240", "script 200"                     // le vol du fantôme, le vivier qui se gonfle
+  ];
+  expect(attendues.filter(s => !sortes.has(s)), mouvements.join("\n")).toEqual([]);
 });
 
 test("K4 — une feuille se ferme par « Fermer », par Échap et par le fond", async ({ page }) => {
