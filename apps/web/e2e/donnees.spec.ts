@@ -41,6 +41,26 @@ test("H1 — avec un serveur, le bouton dit « À jour », et y revient une fois
   await expect.poll(() => affectationsServeur(page, TODAY)).toEqual([{ site_id: S9, person_id: "p_nixon" }]);
 });
 
+/* Constat U29 (recette W8) : lancée sans joindre le serveur, rien à
+   envoyer, l'application disait « 0 en attente », en orange. Comme
+   l'ancienne version, mais ce n'était pas vrai pour autant : ce qui
+   attend, c'est le serveur. */
+test("H1 — lancée sans joindre le serveur, rien à envoyer : le bouton dit « Hors ligne », pas « 0 en attente »", async ({ page }) => {
+  test.skip(source() === "local", "propre aux sources distantes");
+  await openLocal(page);
+  await expect(etat(page)).toHaveText(/^à jour$/i);
+  // L'instantané s'écrit 250 ms après la lecture : on l'attend, comme l'appareil.
+  await expect.poll(() => page.evaluate(() => Object.keys(localStorage).some(k => k.startsWith("geoplan.instantane.v4:")))).toBe(true);
+  const serveur = source() === "api" ? /\/(api|socket\.io)\// : /supabase\.co/;
+  await page.route(serveur, r => r.abort("internetdisconnected"));
+  await page.routeWebSocket(serveur, ws => { ws.close(); });
+  await page.reload();
+  await expect(page.locator("article[data-site]")).toHaveCount(3);
+  // supabase-js insiste une dizaine de secondes avant que la première lecture échoue.
+  await expect(etat(page)).toHaveAttribute("data-etat", "off", { timeout: 20_000 });
+  await expect(etat(page)).toHaveText(/^hors ligne$/i);
+});
+
 test("H2 — la feuille « Données » dit où sont les données et ce qu'elles contiennent", async ({ page }) => {
   test.skip(source() !== "local", "propre au mode local");
   await openLocal(page);

@@ -118,8 +118,10 @@ function BoutonEtat({ ouvrir }: { ouvrir: () => void }){
       className={cn(cible, "flex h-8.5 flex-none items-center gap-1.25 rounded-[10px] border bg-surface-2 px-2.25",
         "font-display text-[9.5px]/none font-semibold tracking-[.07em] uppercase", ETAT[etat].bouton)}>
       <span className={cn("size-1.75 flex-none rounded-[50%]", ETAT[etat].point)} />
+      {/* Rien à envoyer, mais aucune lecture n'a réussi depuis le
+          lancement : « 0 en attente » n'était pas vrai (constat U29). */}
       <span>{etat === "ok" ? "À jour"
-        : etat === "off" ? enAttente + " en attente"
+        : etat === "off" ? (enAttente ? enAttente + " en attente" : "Hors ligne")
         : etat === "local" ? "Local" : "…"}</span>
     </button>
   );
