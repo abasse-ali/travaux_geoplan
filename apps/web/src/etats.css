@@ -21,9 +21,10 @@
 .zone.over{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 13%,var(--surface));border-style:solid}
 .zone.over.urg{border-color:var(--urgence);background:color-mix(in srgb,var(--urgence) 11%,var(--surface))}
 
-/* Toute puce qu'on soulève (dessin : ui/puce.ts). !important : Framer
-   Motion écrit en ligne l'opacité de la puce (1, fin de son entrée), qui
-   l'emportait — la puce soulevée ne s'estompait pas (constat V3). */
+/* Toute puce qu'on soulève (dessin : ui/puce.ts). !important : une puce
+   qui entre (chipIn, une animation CSS) l'emporterait sur une règle
+   ordinaire le temps de son entrée. Avant W6, c'était l'opacité que Framer
+   Motion écrivait en ligne : la puce soulevée ne s'estompait pas (constat V3). */
 .chip.lifted{opacity:.3 !important}
 /* La puce d'arrivée, le temps que le fantôme vienne s'y poser : c'est lui
    qui devient elle (ui/mouvement/atterrissage.ts, W6). Après .lifted : une

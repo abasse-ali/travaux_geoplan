@@ -10,9 +10,9 @@
    serait alors dans l'attribut class au repos, là où les tests lisent
    l'état.
 
-   Le pressé s'écrit en `transform`, pas en `scale` : Framer Motion tient
-   le `transform` en ligne de la puce, et l'état pressé doit se ranger
-   derrière lui comme avant.
+   Le pressé s'écrit en `transform`, pas en `scale`, comme sa transition :
+   il se rangeait ainsi derrière le `transform` que Framer Motion écrivait
+   en ligne, jusqu'en W6 ; il est resté tel quel, au même dessin.
    ============================================================ */
 
 import { cibleSerree, cn } from "./primitives/classes";
@@ -22,14 +22,14 @@ import { cibleSerree, cn } from "./primitives/classes";
    l'écart (3 px) : 33 px (WCAG 2.5.8 demande 24). L'élément porte
    data-cible="serree" pour le test L2.
 
-   Une puce se restyle à chaque image quand elle glisse à sa place
-   (layout de Framer Motion) : une centaine de fois par changement de
-   jour. Sa bordure, son ombre, sa graisse et sa transition s'écrivent
-   donc en propriétés directes, au même dessin, et pas avec border,
-   shadow-*, font-semibold, transition-* : ces classes-là composent des
-   variables déclarées (@property --tw-*), que le navigateur résout à
-   chaque restyle (ADR-005, « Le prix d'un restyle » ; gardé par
-   tests/classes-chaudes.test.ts). */
+   Les puces se restylent souvent : toutes celles qui paraissent à chaque
+   changement de jour, et, jusqu'en W6, chacune à chaque image quand elle
+   glissait à sa place (layout de Framer Motion). Leur bordure, leur ombre,
+   leur graisse et leur transition s'écrivent donc en propriétés directes,
+   au même dessin, et pas avec border, shadow-*, font-semibold,
+   transition-* : ces classes-là composent des variables déclarées
+   (@property --tw-*), que le navigateur résout à chaque restyle (ADR-005,
+   « Le prix d'un restyle » ; gardé par tests/classes-chaudes.test.ts). */
 const PUCE = cibleSerree["3px"] + " chip flex items-center gap-1.75 rounded-[9px] [border-width:1px] [border-style:solid]"
   + " bg-surface py-1.5 pr-2.25 font-body text-[13px]/none [font-weight:600] touch-none select-none"
   + " will-change-transform [transition:transform_.12s_ease,opacity_.12s_ease]"
