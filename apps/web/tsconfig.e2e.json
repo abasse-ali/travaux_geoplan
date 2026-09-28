@@ -9,6 +9,7 @@
   "include": [
     "src",
     "e2e",
+    "recette",
     "vite.config.ts",
     "playwright.config.ts"
   ]

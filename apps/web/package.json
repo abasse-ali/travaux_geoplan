@@ -11,7 +11,8 @@
     "test:e2e": "playwright test --project=iphone --project=pwa",
     "test:e2e:api": "node e2e/source.mjs api",
     "test:e2e:supabase": "node e2e/source.mjs supabase",
-    "test:captures": "playwright test --project=captures"
+    "test:captures": "playwright test --project=captures",
+    "recette": "playwright test --config recette/playwright.config.ts"
   },
   "dependencies": {
     "@geoplan/domain": "3.0.0",
