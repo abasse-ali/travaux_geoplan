@@ -5,8 +5,10 @@ import { describe, expect, it } from "vitest";
    n'a pas de test à elle : ce qui s'y vérifie en marche est joué par la
    recette (W8). Ici, ce qu'une relecture de la configuration suffit à
    garder. */
-const conf = readFileSync(new URL("../../../infra/nginx/emplacements.conf", import.meta.url), "utf8")
+const lire = (f: string): string => readFileSync(new URL("../../../infra/nginx/" + f, import.meta.url), "utf8")
   .replace(/#.*$/gm, "");
+const conf = lire("emplacements.conf");
+const principale = lire("nginx.conf");
 
 /* Les emplacements qui passent à l'API, avec leur contenu. */
 const versLApi = [...conf.matchAll(/location\s+([^{\s]+)\s*\{([^}]*)\}/g)]
@@ -34,5 +36,13 @@ describe("nginx devant l'API", () => {
       expect(d, e.chemin).not.toBeNull();
       expect(secondes(d![1]!), e.chemin).toBeLessThanOrEqual(10);
     }
+  });
+
+  /* Constat R4 (relecture de la recette, W8) : nginx servait tout sans
+     compression ; dispo.html pesait 177 ko sur le fil. */
+  it("compresse les pages et les fichiers de l'application", () => {
+    expect(principale).toMatch(/\bgzip\s+on;/);
+    const types = /gzip_types\s+([^;]+);/.exec(principale)?.[1].split(/\s+/) ?? [];
+    expect(types).toEqual(expect.arrayContaining(["text/css", "application/javascript"]));
   });
 });
