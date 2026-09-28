@@ -21,7 +21,7 @@
 
 import { expect, test, type Page } from "@playwright/test";
 import {
-  FAKE_SUPABASE, S9, TODAY, carte, effectifAvec, feuille, onglet, openLocal, poser, puceSur, source, useFakeSupabase
+  FAKE_SUPABASE, S9, TODAY, carte, effectifAvec, feuille, onglet, openLocal, poser, puceSur, source, useFakeSupabase, vivier
 } from "./helpers";
 
 const INTERACTIFS = "button, a[href], input, textarea, select, [role=tab], [role=switch], [role=slider], [tabindex]:not([tabindex='-1'])";
@@ -320,6 +320,25 @@ test.describe("L — accessibilité", () => {
     await puceSur(page, S9, "Nixon").click();
     await expect(feuille(page, "Nixon")).toBeVisible();
     await expect(page.getByRole("dialog")).toHaveCount(1);
+  });
+
+  test("L3 — au clavier, replier ou ouvrir le vivier garde le focus", async ({ page }) => {
+    /* Relecture adversariale de W6 : le visage qui avait le focus quitte le
+       DOM 220 ms après le geste, et le focus tombait sur la page. */
+    const focus = () => page.evaluate(() => {
+      const el = document.activeElement as HTMLElement | null;
+      return !el || el === document.body ? "page" : el.getAttribute("aria-label") || el.textContent?.trim() || el.tagName;
+    });
+    await openLocal(page);
+    await vivier(page).getByRole("button", { name: "Réduire le vivier" }).focus();
+    await page.keyboard.press("Enter");
+    await expect(vivier(page).getByRole("button", { name: /^Ouvrir le vivier/ })).toBeVisible();
+    await page.waitForTimeout(500);
+    expect(await focus()).toMatch(/^Ouvrir le vivier/);
+    await page.keyboard.press("Enter");
+    await expect(vivier(page).getByRole("button", { name: "Réduire le vivier" })).toBeVisible();
+    await page.waitForTimeout(500);
+    expect(await focus()).toBe("Réduire le vivier");
   });
 
   test("L3 — au clavier, le focus reste dans la feuille ouverte", async ({ page }) => {

@@ -152,10 +152,22 @@ export default function Island({ free, daysOf, week, dayIndex, state, setState, 
     forme.current = ilot.current ? noterForme(ilot.current) : null;
     setState(s);
   };
+  /* Le focus suit le geste. Le visage qui l'avait (au clavier, avec
+     VoiceOver) quitte le DOM 220 ms plus tard, et le focus tombait sur la
+     page (relecture adversariale de W6) : il passe au contrôle du nouveau
+     visage qui défait le geste. Au doigt, rien ne bouge : un bouton
+     touché ne prend pas le focus sur l'iPhone. */
+  const visageOuvert = useRef<HTMLDivElement | null>(null);
+  const bulle = useRef<HTMLButtonElement | null>(null);
+  const reduire = useRef<HTMLButtonElement | null>(null);
   useLayoutEffect(() => {
     const avant = forme.current;
     forme.current = null;
     if (avant && ilot.current) jouerForme(ilot.current, avant);
+    const actif = document.activeElement;
+    if (!actif || actif === document.body) return;
+    if (state === "bubble" && visageOuvert.current?.contains(actif)) bulle.current?.focus({ preventScroll: true });
+    else if (state === "open" && actif === bulle.current) reduire.current?.focus({ preventScroll: true });
   }, [state]);
 
   return (
@@ -167,7 +179,7 @@ export default function Island({ free, daysOf, week, dayIndex, state, setState, 
       data-vide={vide || undefined}
       style={{ borderRadius: open ? 20 : 24 }}>
       {montre("open") && (
-        <div key="full" className={cn("flex min-h-0 flex-col", FONDU, EFFACE_BULLE, entre("open") && ENTRE)}>
+        <div key="full" ref={visageOuvert} className={cn("flex min-h-0 flex-col", FONDU, EFFACE_BULLE, entre("open") && ENTRE)}>
           <div className="flex flex-none items-center gap-2.25 px-3.25 pt-2.75 pb-2">
             {/* La tête tient sur 30 px, les puces commencent 8 px plus bas :
                 chaque contrôle s'étend autant que la place le permet, sans
@@ -180,7 +192,7 @@ export default function Island({ free, daysOf, week, dayIndex, state, setState, 
               </span>
             </button>
             <Interrupteur checked={urgence} onCheckedChange={setUrgence}>Urgence</Interrupteur>
-            <button data-cible="serree" onClick={() => changer("bubble")}
+            <button ref={reduire} data-cible="serree" onClick={() => changer("bubble")}
               className="relative isolate grid size-7.5 flex-none place-items-center rounded-[9px] border border-line bg-surface-2 text-muted active:bg-surface-3 after:absolute after:-z-10 after:-inset-[5px] after:content-['']"
               aria-label="Réduire le vivier">
               <svg viewBox="0 0 24 24" aria-hidden="true" className={cn("size-4 stroke-[2.2]", TRAIT)}><path d="m6 10 6 6 6-6" /></svg>
@@ -193,7 +205,7 @@ export default function Island({ free, daysOf, week, dayIndex, state, setState, 
         </div>
       )}
       {montre("bubble") && (
-        <button key="face"
+        <button key="face" ref={bulle}
           className={cn("flex h-11.5 flex-none items-center gap-1.75 px-4 text-ink-2 active:[transform:scale(.96)]",
             anneauDedans, FONDU, EFFACE_OUVERT, entre("bubble") && ENTRE)}
           onClick={() => changer("open")}
