@@ -23,6 +23,13 @@ import {
   type Compte, type Depot, type Donnees, type Instantane, type LienDispo, type Operation
 } from "./types";
 
+/* Sous un service worker, le client Socket.IO vient de son cache : il se
+   charge tout de suite, comme les feuilles (ui/App.tsx, constat R1).
+   Après un déploiement, attendre l'ouverture de l'application, c'était
+   le trouver retiré du cache et absent du serveur : plus de temps réel
+   jusqu'au relancement suivant. */
+if (navigator.serviceWorker?.controller) void import("socket.io-client").catch(() => undefined);
+
 type Fiche<T> = T & { version: number };
 interface Equipes { chantiers: Record<string, { plan: Record<string, string[]> }> }
 

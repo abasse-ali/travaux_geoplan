@@ -19,6 +19,14 @@ import { Onglet, Onglets, ListeOnglets, PanneauOnglet } from "./primitives/ongle
 
 const chargerFeuilles = () => import("./Feuilles");
 const Feuilles = lazy(chargerFeuilles);
+/* Sous un service worker, les feuilles viennent de son cache : elles ne
+   coûtent rien au lancement, et elles se chargent tout de suite. Après un
+   déploiement, le nouveau service worker s'installe pendant que cette
+   page tourne encore, et à son activation il retire du cache l'ancien
+   morceau, que le serveur n'a plus : chargé 1,2 s après l'ouverture de
+   l'application, qui attend la session, il arrivait trop tard, et plus
+   aucune fiche ne s'ouvrait jusqu'au relancement suivant (constat R1). */
+if (navigator.serviceWorker?.controller) void chargerFeuilles().catch(() => undefined);
 import Island from "./Island";
 import Chantiers from "./Chantiers";
 import Semaine from "./Semaine";
@@ -44,10 +52,9 @@ const champsUi = (s: UiState): UiCoque => ({
 });
 
 /* Les feuilles sont un morceau à part (ui/Feuilles.tsx) : l'ouverture du
-   planning ne les paie pas. Elles se chargent dès que l'application est
-   au repos, pas à la première feuille ouverte : après un déploiement,
-   l'ancien morceau n'existe plus sur le serveur, et hors ligne il
-   pourrait manquer au cache ; déjà en mémoire, il ne manque plus.
+   planning ne les paie pas. Sans service worker (première visite), elles
+   se chargent dès que l'application est au repos, pas à la première
+   feuille ouverte : déjà en mémoire, elles ne peuvent plus manquer.
    Ce composant suit seul l'état « une feuille est ouverte » : la coque
    ne se redessine pas quand une feuille s'ouvre. */
 function FeuillesALaDemande(props: { vue: Vue; act: Actions; synchro: Synchro; ui: UiCoque }){
