@@ -8,22 +8,29 @@
    Elle part de la base préparée (l'effectif de référence, un compte, rien
    de posé) et s'en assure ; le jour est celui de l'horloge : les gestes
    visent la semaine en cours, où les trois chantiers sont ouverts.
+   Avant tout geste, elle vérifie aussi qu'elle joue sur une pile locale :
+   l'API s'y sert en local, et le seul compte est celui de la recette.
    ============================================================ */
 
 import { execSync } from "node:child_process";
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { request } from "node:http";
 import { fileURLToPath } from "node:url";
 import { expect, test, type BrowserContext, type Page } from "@playwright/test";
-import { addDays, dayIndex, fmtDay, mondayOf, todayISO, weekNum } from "@geoplan/domain";
+import { addDays, dayIndex, fmtDay, mondayOf, parse, todayISO, weekNum } from "@geoplan/domain";
 import { carte, feuille, glisser, jours, montrerZone, noterLesToasts, onglet, puceSur, puceVivier, toastsVus, vivier, vuToast, zone } from "../e2e/helpers";
 
 const RACINE = fileURLToPath(new URL("../../../", import.meta.url));
-const SORTIE = process.env.RECETTE_SORTIE || fileURLToPath(new URL("./.resultats", import.meta.url));
+/* Les captures et le bilan d'un passage, dans un dossier vidé au départ :
+   rien d'un passage précédent ne peut passer pour une preuve. Le vidage
+   de la base (base.sh) reste à côté, dans .resultats/. */
+const SORTIE = process.env.RECETTE_SORTIE || fileURLToPath(new URL("./.resultats/passage", import.meta.url));
 const URL_PILE = process.env.RECETTE_URL || "http://localhost:8080";
 const MDP = process.env.RECETTE_MDP!;
 const EMAIL = process.env.RECETTE_EMAIL || "geoffrey@recette.test";
 const S9 = "s_9md49", S12 = "s_12ab49", S30 = "s_30ja90";
 const COMPOSE = `docker compose -f ${RACINE}infra/docker-compose.yml`;
+rmSync(SORTIE, { recursive: true, force: true });
 mkdirSync(SORTIE, { recursive: true });
 
 /* La semaine en cours, calculée comme l'application la calcule. Les
@@ -60,7 +67,10 @@ async function ligne(page: Page, ref: string, geste: () => Promise<string | void
 const nonJoue = (ref: string, pourquoi: string) => { bilan.push({ ref, verdict: "non joué ici", note: pourquoi }); };
 
 /* Un appareil : un contexte, ses refus de politique de sécurité et ses
-   erreurs notés, les polices de Google coupées comme dans le filet. */
+   erreurs notés. Les polices de Google répondent une feuille vide, au
+   niveau du contexte : dans Chromium, les requêtes du service worker y
+   passent aussi, et chaque demande est comptée (constat R2). */
+const polices: string[] = [];
 async function appareil(context: BrowserContext, nom: string): Promise<Page> {
   await context.grantPermissions(["clipboard-read", "clipboard-write"], { origin: URL_PILE }).catch(() => {});
   const page = await context.newPage();
@@ -78,7 +88,8 @@ async function appareil(context: BrowserContext, nom: string): Promise<Page> {
       return ecrire(items);
     };
   });
-  await page.route(/fonts\.(googleapis|gstatic)\.com/, r => r.abort());
+  await context.route(/fonts\.googleapis\.com/, r => { polices.push(nom); return r.fulfill({ contentType: "text/css", body: "/* polices */" }); });
+  await context.route(/fonts\.gstatic\.com/, r => r.fulfill({ status: 404 }));
   await page.addInitScript(() => {
     document.addEventListener("securitypolicyviolation", e =>
       console.error("CSP-REFUS " + e.effectiveDirective + " " + (e.blockedURI || "en ligne")));
@@ -159,9 +170,16 @@ async function pucePosee(page: Page, nom: string): Promise<{ sid: string; puce: 
 const titreEtape = (page: Page, sid: string, nom: string) => carte(page, sid).getByRole("button")
   .filter({ has: page.locator("[data-etape-nom]", { hasText: new RegExp("^" + nom + "$") }) });
 
-test("Recette W8 — GESTES.md, ligne par ligne, sur la pile Docker", async ({ browser }) => {
+test("Recette W8 — GESTES.md, ligne par ligne, sur la pile Docker", async ({ browser, browserName }) => {
   test.setTimeout(1_800_000);
   expect(dayIndex(AUJ), "la recette se joue du lundi au jeudi : à partir du vendredi, les demandes de dispos visent la semaine suivante").toBeLessThan(4);
+  /* La garde : l'adresse (playwright.config.ts) ne suffit pas, Docker peut
+     viser une autre machine, et sur le VPS la production écoute aussi en
+     local. Comme recette/base.sh : une API qui se sert en local, et une
+     base dont le seul compte est celui de la recette. */
+  const origine = execSync(COMPOSE + " exec -T api printenv APP_ORIGIN", { encoding: "utf8", stdio: "pipe" }).trim();
+  expect(origine, "l'API de la pile se sert en local").toMatch(/^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/);
+  expect(sql("SELECT COUNT(*), MIN(email) FROM users;").split(/\s+/), "le seul compte est celui de la recette").toEqual(["1", EMAIL]);
   const depart = sql("SELECT (SELECT COUNT(*) FROM people), (SELECT COUNT(*) FROM sites), (SELECT COUNT(*) FROM assignments), (SELECT COUNT(*) FROM avail_requests);");
   expect(depart.split(/\s+/), "la base de départ : 13 compagnons, 3 chantiers, rien de posé, aucune demande (recette/base.sh remettre)").toEqual(["13", "3", "0", "0"]);
   const geoffrey = await browser.newContext();
@@ -329,8 +347,9 @@ test("Recette W8 — GESTES.md, ligne par ligne, sur la pile Docker", async ({ b
   });
   await ligne(page, "B14", async () => {
     const noms = await vivier(page).locator(".chip").evaluateAll(els => els.map(e => e.getAttribute("data-name")));
-    expect(noms).not.toContain("Erwan");
-    expect(noms).not.toContain("Kia");                 // Kia ne vient que le jeudi
+    expect(noms).toContain("Chaggy");                  // le mardi seulement
+    for (const n of ["Aklan", "Erwan"]) expect(noms, n + " est posé").not.toContain(n);
+    for (const n of ["Kia", "Mojtaba"]) expect(noms, n + " ne vient pas le mardi").not.toContain(n);
     return "mardi : " + noms.join(", ");
   });
   await ligne(page, "B15", async () => {
@@ -445,7 +464,22 @@ test("Recette W8 — GESTES.md, ligne par ligne, sur la pile Docker", async ({ b
     await page.screenshot({ path: `${SORTIE}/E2-vague.png` });
     return "plan appliqué, la vague se pose";
   });
-  nonJoue("E3", "essayé en semaine 50, après la fin prévue des trois chantiers : « Répartir » y pose encore 45 journées, les chantiers en retard restent à pourvoir tant qu'ils ne sont pas livrés. Le cas n'existe qu'avec tous les chantiers livrés : filet (repartir.spec.ts)");
+  await ligne(page, "E3", async () => {
+    /* La semaine d'avant l'ouverture des trois chantiers de l'effectif
+       (le 31 août 2026) : aucun n'est à pourvoir. Après leur fin prévue,
+       si : un chantier en retard le reste tant qu'il n'est pas livré. */
+    const avant = mondayOf("2026-08-24");
+    const recul = Math.round((parse(LUNDI).getTime() - parse(avant).getTime()) / 604_800_000);
+    const precedente = page.getByRole("button", { name: "Semaine précédente" });
+    for (let k = 0; k < recul; k++) await precedente.click();
+    await expect(page.locator("[data-semaine]")).toHaveText(new RegExp("^Sem\\. " + weekNum(avant) + " "));
+    await page.getByRole("button", { name: "Répartir toute l'équipe sur la semaine" }).click();
+    await expect(feuille(page, "Répartir la semaine").getByText("Aucun chantier actif à pourvoir cette semaine.")).toBeVisible();
+    await page.keyboard.press("Escape");
+    await page.getByRole("button", { name: "Auj." }).click();
+    await expect(page.locator("[data-semaine]")).toHaveText(new RegExp("^Sem\\. " + N + " "));
+    return `semaine ${weekNum(avant)}, avant l'ouverture des chantiers : « Aucun chantier actif à pourvoir cette semaine. »`;
+  });
   await ligne(page, "E4", async () => {
     await page.waitForTimeout(1_000);
     await expect(page.locator("[data-grille-semaine] [data-ligne]")).toHaveCount(5);
@@ -478,11 +512,16 @@ test("Recette W8 — GESTES.md, ligne par ligne, sur la pile Docker", async ({ b
     return "supprimé en deux temps";
   });
   await ligne(page, "F4", async () => {
+    // Un autre jour que celui de l'ouverture : le brief est celui du jour affiché (U1).
+    const i = dayIndex(AUJ) === 2 ? 1 : 2;
+    await jours(page).nth(i).click();
     await page.getByRole("button", { name: "Partager le brief" }).click();
-    await vuToast(page, /Copié|Brief/);
+    await vuToast(page, "Copié — collez-le dans votre message");
     const texte = await presse(page);
-    expect(texte.startsWith("GEOPLAN — Lundi " + fmtDay(LUNDI))).toBe(true);
-    return "copié : " + texte.split("\n").slice(0, 3).join(" / ");
+    await lundi.click();
+    const attendu = "GEOPLAN — " + ["Lundi", "Mardi", "Mercredi"][i] + " " + fmtDay(jour(i));
+    expect(texte.startsWith(attendu), attendu).toBe(true);
+    return "copié, le jour affiché : " + texte.split("\n").slice(0, 3).join(" / ");
   });
 
   /* ---------- G. Équipe ---------- */
@@ -531,6 +570,7 @@ test("Recette W8 — GESTES.md, ligne par ligne, sur la pile Docker", async ({ b
     await page.getByRole("button", { name: new RegExp("^Demander les dispos · semaine " + N) }).click();
     const f = feuille(page, "Demander les dispos");
     await expect(f.locator("[data-compagnon]")).toHaveCount(2);
+    expect(sql("SELECT COUNT(*) FROM avail_requests;"), "ouvrir la feuille ne crée rien (U11)").toBe("0");
     await expect(f.locator('[data-compagnon="p_nixon"]').getByRole("button", { name: "SMS" })).toBeVisible();
     await f.locator('[data-compagnon="p_nixon"]').getByRole("button", { name: "Lien" }).click();
     await vuToast(page, "Lien copié");
@@ -539,6 +579,7 @@ test("Recette W8 — GESTES.md, ligne par ligne, sur la pile Docker", async ({ b
     await f.locator('[data-compagnon="p_giorgi"]').getByRole("button", { name: "Lien" }).click();
     await expect.poll(() => presse(page)).not.toBe(lienNixon);
     lienGiorgi = await presse(page);
+    expect(sql("SELECT COUNT(*) FROM avail_requests;"), "un lien par compagnon touché").toBe("2");
     expect(lienNixon.startsWith(URL_PILE + "/dispo.html?t=")).toBe(true);
     expect(lienNixon).toMatch(/\?t=[\w-]{16,}$/);
     await page.keyboard.press("Escape");
@@ -577,7 +618,8 @@ test("Recette W8 — GESTES.md, ligne par ligne, sur la pile Docker", async ({ b
     await compagnon.getByRole("button", { name: "Envoyer mes disponibilités" }).click();
     await expect(compagnon.getByRole("heading", { name: "C'est envoyé, merci Nixon" })).toBeVisible();
     await expect(compagnon.getByText(/disponible : lundi, mercredi/)).toBeVisible();
-    return "envoyé ; « tu es noté disponible : lundi, mercredi »";
+    await expect(compagnon.getByText(/Message transmis/)).toContainText("« Je finis tôt le mercredi »");
+    return "envoyé ; « tu es noté disponible : lundi, mercredi », et le mot transmis";
   });
   await ligne(page, "G6", async () => {
     await vuToast(page, "Nixon a répondu pour la semaine " + N, 15_000);
@@ -623,7 +665,8 @@ test("Recette W8 — GESTES.md, ligne par ligne, sur la pile Docker", async ({ b
     await expect(compagnon.getByRole("heading", { name: "C'est envoyé, merci Giorgi" })).toBeVisible();
     const affiche = (await compagnon.getByText(/Message transmis/).innerText()).replace(/^.*« /s, "").replace(/ »\s*$/s, "");
     const enBase = sql("SELECT CHAR_LENGTH(note) FROM avail_requests WHERE person_id = 'p_giorgi';");
-    return `mot de ${mot.length} caractères : l'écran en montre ${affiche.length}, la base en a ${enBase}`;
+    expect(enBase, "tronqué à 300 caractères à l'envoi").toBe("300");
+    return `mot de ${mot.length} caractères : la base en a ${enBase} ; l'écran en montre ${affiche.length} (U14, gardé tel quel)`;
   });
   await ligne(compagnon, "J8", async () => {
     execSync(COMPOSE + " stop api", { stdio: "ignore" });
@@ -641,11 +684,26 @@ test("Recette W8 — GESTES.md, ligne par ligne, sur la pile Docker", async ({ b
     return `API arrêtée : « Connexion impossible » en ${(duree / 1000).toFixed(1)} s ; relancée`;
   });
   await ligne(compagnon, "J11", async () => {
-    execSync(`rm -rf ${SORTIE}/servi && ${COMPOSE} cp nginx:/usr/share/nginx/html ${SORTIE}/servi`);
-    const m = JSON.parse(execSync(`npm run -s measure -- --json --dir ${SORTIE}/servi`, { cwd: RACINE, encoding: "utf8" })) as { page: string; total: number }[];
-    const dispo = m.find(x => x.page === "dispo.html")!, index = m.find(x => x.page === "index.html")!;
-    expect(dispo.total).toBeLessThan(158_900 * 1.1);           // la référence du journal, 158,9 ko
-    return `ce que nginx sert : dispo.html ${(dispo.total / 1000).toFixed(1)} ko, index.html ${(index.total / 1000).toFixed(1)} ko (gzip -9)`;
+    /* Ce qui passe sur le fil, demandé comme un navigateur (gzip) : la
+       page et ce qu'elle charge à l'ouverture. Le poids calculé sur les
+       fichiers ne disait rien de ce que nginx envoyait (constat R4). */
+    const surLeFil = (chemin: string): Promise<{ octets: number; corps: string }> => new Promise((ok, ko) => {
+      request(URL_PILE + chemin, { headers: { "accept-encoding": "gzip" } }, r => {
+        const morceaux: Buffer[] = [];
+        r.on("data", (m: Buffer) => morceaux.push(m));
+        r.on("end", () => ok({ octets: Buffer.concat(morceaux).length, corps: r.headers["content-encoding"] ? "" : Buffer.concat(morceaux).toString("utf8") }));
+      }).on("error", ko).end();
+    });
+    const poids: Record<string, number> = {};
+    for (const pagePoids of ["/dispo.html", "/index.html"]) {
+      const html = await (await compagnon.request.get(pagePoids)).text();
+      const fichiers = [...new Set([...html.matchAll(/(?:src|href)="(\/assets\/[^"]+)"/g)].map(m => m[1]!))];
+      let total = (await surLeFil(pagePoids)).octets;
+      for (const f of fichiers) total += (await surLeFil(f)).octets;
+      poids[pagePoids] = total;
+    }
+    expect(poids["/dispo.html"]!, "dispo.html : la référence, 158,9 ko, plus 10 %").toBeLessThan(158_900 * 1.1);
+    return `sur le fil : dispo.html ${(poids["/dispo.html"]! / 1000).toFixed(1)} ko, index.html ${(poids["/index.html"]! / 1000).toFixed(1)} ko`;
   });
 
   /* ---------- B5 : un compagnon posé un jour où il s'est dit absent ---------- */
@@ -660,6 +718,7 @@ test("Recette W8 — GESTES.md, ligne par ligne, sur la pile Docker", async ({ b
     const mardi = "mardi " + fmtDay(jour(1));
     await vuToast(page, new RegExp("^Nixon : .+ · " + echapper(mardi) + "$"));
     await expect(puceSur(page, vers, "Nixon")).toBeVisible();
+    await expect(puceSur(page, vers, "Nixon").locator("s").nth(1)).toHaveAttribute("data-etat", "absent");
     await vuToast(page, "Attention : Nixon s'est déclaré absent ce jour-là", 8_000);
     const t = await toastsVus(page);
     const pose = t.filter(x => x.texte.startsWith("Nixon : ") && x.texte.endsWith(" · " + mardi)).at(-1)!, avert = t.filter(x => x.texte.startsWith("Attention : Nixon")).at(-1)!;
@@ -712,6 +771,7 @@ test("Recette W8 — GESTES.md, ligne par ligne, sur la pile Docker", async ({ b
   const second = await browser.newContext();
   const autre = await appareil(second, "Deuxième appareil");
   await releverLesMouvements(autre);
+  let mouvementsH7: string[] | null = null;
   await ligne(autre, "H7", async () => {
     await connecter(autre);
     await jours(autre).nth(0).click();                        // le lundi, comme le premier appareil
@@ -727,12 +787,12 @@ test("Recette W8 — GESTES.md, ligne par ligne, sur la pile Docker", async ({ b
     await feuille(page, "Morgan").getByRole("button", { name: /^12AB49/ }).click();
     await expect(autre.locator(`[data-drop="${S12}"] [data-name="Morgan"]`)).toBeVisible({ timeout: 10_000 });
     await autre.waitForTimeout(800);
-    const vus = await mouvements(autre);
-    writeFileSync(`${SORTIE}/K6-mouvements.json`, JSON.stringify(vus, null, 2));
+    mouvementsH7 = await mouvements(autre);
     return "retiré puis posé sur un appareil : l'autre suit, sans recharger";
   });
   await ligne(autre, "K6", async () => {
-    const vus = JSON.parse(readFileSync(`${SORTIE}/K6-mouvements.json`, "utf8")) as string[];
+    expect(mouvementsH7, "relevés pendant H7 : sans H7 réussi, pas de K6").not.toBeNull();
+    const vus = mouvementsH7!;
     const entrees = vus.filter(v => /^css /.test(v));
     // Ce qui arrive vraiment : les puces de Morgan, et « Personne de libre » quand le vivier se vide de nouveau.
     const autres = entrees.filter(v => !/\[Morgan\]|« Personne de libre/.test(v));
@@ -746,7 +806,7 @@ test("Recette W8 — GESTES.md, ligne par ligne, sur la pile Docker", async ({ b
     await expect(page.locator("article[data-site]").first()).toBeVisible({ timeout: 20_000 });
     await jours(page).nth(0).click();                         // relancée, elle repart d'aujourd'hui
     await expect(puceSur(page, S12, "Morgan")).toBeAttached();
-    await expect(etat(page)).not.toHaveText(/^à jour$/i);
+    await expect(etat(page), "rien n'attend : « Hors ligne », pas « 0 en attente » (U29)").toHaveText(/^hors ligne$/i, { timeout: 15_000 });
     const libelle = await etat(page).innerText();
     await geoffrey.setOffline(false);
     await aJour(page);
@@ -755,12 +815,18 @@ test("Recette W8 — GESTES.md, ligne par ligne, sur la pile Docker", async ({ b
 
   /* ---------- I (suite), K ---------- */
   await ligne(page, "I3", async () => {
+    const avant = polices.filter(n => n === "Geoffrey").length;
     await page.reload();
     await expect(page.locator("article[data-site]").first()).toBeVisible({ timeout: 20_000 });
     await expect(page.getByRole("button", { name: "Se connecter" })).toHaveCount(0);
     await carte(page, S9).getByRole("button", { name: /^Note de chantier/ }).click();
     await expect(carte(page, S9).getByRole("textbox")).toHaveValue("Clés chez la gardienne");
-    return "rechargée : toujours connectée, la note est là";
+    /* Sous le service worker, c'est lui qui demande les polices ; seul
+       Chromium laisse le test voir ses requêtes (R2). */
+    const sousSw = browserName === "chromium" && await page.evaluate(() => !!navigator.serviceWorker?.controller);
+    if (sousSw)
+      await expect.poll(() => polices.filter(n => n === "Geoffrey").length, { message: "les polices demandées sous le service worker (R2)" }).toBeGreaterThan(avant);
+    return "rechargée : toujours connectée, la note est là" + (sousSw ? ", les polices demandées par le service worker" : "");
   });
   await ligne(page, "K4", async () => {
     await etat(page).click();
@@ -798,9 +864,15 @@ test("Recette W8 — GESTES.md, ligne par ligne, sur la pile Docker", async ({ b
   });
   await ligne(page, "K8", async () => {
     const sortie = execSync(COMPOSE + " exec -T api node --disable-warning=ExperimentalWarning apps/api/src/cli/rappel.ts", { encoding: "utf8", stdio: "pipe" });
-    const bilanRappel = JSON.parse(sortie) as Record<string, unknown>;
-    const encore = execSync(COMPOSE + " exec -T api node --disable-warning=ExperimentalWarning apps/api/src/cli/rappel.ts", { encoding: "utf8", stdio: "pipe" });
-    return "à blanc : " + JSON.stringify(bilanRappel).slice(0, 260) + " ; relancée : " + encore.replace(/\s+/g, " ").slice(0, 160);
+    const bilanRappel = JSON.parse(sortie) as { statut: string; aBlanc: boolean; envoyes: number; erreurs: unknown[] };
+    const encore = JSON.parse(execSync(COMPOSE + " exec -T api node --disable-warning=ExperimentalWarning apps/api/src/cli/rappel.ts", { encoding: "utf8", stdio: "pipe" })) as { statut: string; envoyes: number };
+    /* Nixon et Giorgi ont une adresse (G3), et aucune réponse pour la
+       semaine qui vient : deux e-mails prévus, à blanc. L'envoi réel
+       (P4 : jamais deux fois) est tenu par les tests de l'API, contre un
+       faux Brevo : la recette n'envoie jamais rien. */
+    expect(bilanRappel).toMatchObject({ statut: "fait", aBlanc: true, envoyes: 2, erreurs: [] });
+    expect(encore).toMatchObject({ statut: "deja-faite", envoyes: 0 });
+    return "à blanc : " + JSON.stringify(bilanRappel).slice(0, 200) + " ; relancée : « " + encore.statut + " »";
   });
   await ligne(page, "K5", async () => {
     await page.evaluate(() => {
@@ -849,6 +921,11 @@ test("Recette W8 — GESTES.md, ligne par ligne, sur la pile Docker", async ({ b
   const nuit = await appareil(sombre, "Sombre");
   await ligne(nuit, "K2", async () => {
     await connecter(nuit);
+    const clarte = await nuit.evaluate(() => {
+      const [r, g, b] = getComputedStyle(document.body).backgroundColor.match(/\d+/g)!.map(Number);
+      return (0.2126 * r! + 0.7152 * g! + 0.0722 * b!) / 255;
+    });
+    expect(clarte, "le fond de la page est sombre").toBeLessThan(0.25);
     await nuit.screenshot({ path: `${SORTIE}/K2-chantiers.png` });
     await nuit.getByRole("button", { name: "État des données" }).click();
     await nuit.waitForTimeout(700);
@@ -856,7 +933,7 @@ test("Recette W8 — GESTES.md, ligne par ligne, sur la pile Docker", async ({ b
     await nuit.keyboard.press("Escape");
     await onglet(nuit, "Semaine").click();
     await nuit.waitForTimeout(500);
-    return "captures en sombre : chantiers, feuille, semaine";
+    return `fond sombre (clarté ${clarte.toFixed(2)}) ; captures : chantiers, feuille, semaine`;
   });
 
   /* K3 : le mouvement réduit, sur la construction de production ; le

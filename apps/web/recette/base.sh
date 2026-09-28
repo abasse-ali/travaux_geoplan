@@ -19,6 +19,22 @@ racine=$(cd "$ici/../../.." && pwd)
 compose="docker compose -f $racine/infra/docker-compose.yml"
 vidage="$ici/.resultats/base-depart.sql"
 mysql_root='mysql -u root -p"$MYSQL_ROOT_PASSWORD" geoplan'
+compte="${RECETTE_EMAIL:-geoffrey@recette.test}"
+
+# La garde : Docker peut viser une autre machine (DOCKER_HOST, un
+# contexte), et sur le VPS, ce même fichier de compose est la production.
+# On ne touche qu'à une pile qui se sert en local (APP_ORIGIN de l'API),
+# et dont le seul compte est celui de la recette.
+origine=$($compose exec -T api printenv APP_ORIGIN 2>/dev/null || true)
+case "$origine" in
+  http://localhost|http://localhost:*|http://127.0.0.1|http://127.0.0.1:*) ;;
+  *) echo "Refusé : l'API de cette pile sert « ${origine:-?} », pas une adresse locale. La recette ne touche qu'à une pile locale." >&2; exit 1 ;;
+esac
+comptes=$($compose exec -T mysql sh -c "$mysql_root -N -e 'SELECT COUNT(*), MIN(email) FROM users' 2>/dev/null" | tr '\t' ' ')
+if [ "$comptes" != "1 $compte" ]; then
+  echo "Refusé : la base n'a pas pour seul compte $compte (elle a : ${comptes:-?})." >&2
+  exit 1
+fi
 
 case "${1:-}" in
   garder)
