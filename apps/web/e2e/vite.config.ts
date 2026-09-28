@@ -12,6 +12,7 @@
 import { defineConfig, mergeConfig, type Plugin } from "vite";
 import { fileURLToPath } from "node:url";
 import { normalize } from "node:path";
+import { readFileSync } from "node:fs";
 import base from "../vite.config";
 
 const real = normalize(fileURLToPath(new URL("../src/config.ts", import.meta.url)));
@@ -55,6 +56,15 @@ const fauxSupabase: Plugin = {
 
 const PORT = Number(process.env.GEOPLAN_E2E_PORT || 5199);   // voir playwright.config.ts
 
+/* La politique de sécurité de la production (infra/nginx/securite.conf),
+   appliquée à la construction que sert `vite preview` (projet « pwa ») :
+   ce que nginx refuserait, le filet le voit. Personne ne l'avait vue
+   sous cette politique avant W8, et elle y perdait les styles de ses
+   feuilles du bas (constat P7). */
+const CSP = /add_header Content-Security-Policy "([^"]+)"/.exec(
+  readFileSync(new URL("../../../infra/nginx/securite.conf", import.meta.url), "utf8"))?.[1];
+if (!CSP) throw new Error("Politique de sécurité introuvable dans infra/nginx/securite.conf");
+
 /* Source api : l'application et l'API sous la même origine, comme
    derrière nginx en production. Le cookie de session reste ainsi
    « premier parti », et les écritures portent la bonne origine. */
@@ -71,6 +81,6 @@ const relais = process.env.GEOPLAN_E2E_SOURCE === "api"
 export default mergeConfig(base, defineConfig({
   plugins: [configE2E, fauxSupabase],
   server: { port: PORT, strictPort: true, host: "127.0.0.1", proxy: relais },
-  preview: { port: PORT - 1, strictPort: true, host: "127.0.0.1" },
+  preview: { port: PORT - 1, strictPort: true, host: "127.0.0.1", headers: { "Content-Security-Policy": CSP } },
   build: { outDir: "e2e/.dist", emptyOutDir: true }
 }));
