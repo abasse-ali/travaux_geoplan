@@ -179,6 +179,39 @@ test.describe("C4 — glisser sur la barre", () => {
     await expect(barre).toHaveAttribute("aria-valuenow", "75", { timeout: 2_000 });
     await page.mouse.up();
   });
+
+  test("C4 — un glisser interrompu par le système ne règle rien, et la barre revient à ce qui est enregistré", async ({ page }) => {
+    /* Constat U23 : interrompu (pointercancel : un appel, une notification,
+       un défilement que le navigateur reprend), le geste n'enregistrait
+       rien, mais la barre gardait l'aperçu du glisser jusqu'à ce que
+       l'étape se replie. Joué dans la page, comme B4 : la souris de
+       Playwright ne sait pas annuler. */
+    await openLocal(page, replie);
+    const c = carte(page, S9);
+    await ouvrirEtape(page, S9, "Sols & plinthes");
+    const { barre } = await barreDe(page);
+    await expect(barre).toHaveAttribute("aria-valuenow", "0");
+    await barre.evaluate(async el => {
+      const b = el.getBoundingClientRect();
+      const y = b.y + b.height / 2;
+      const ev = (type: string, x: number, sur: EventTarget) => sur.dispatchEvent(new PointerEvent(type,
+        { bubbles: true, cancelable: true, button: 0, clientX: x, clientY: y, pointerId: 7, isPrimary: true, pointerType: "touch" }));
+      ev("pointerdown", b.x + b.width * 0.02, el);
+      for (let k = 1; k <= 8; k++) {
+        await new Promise(r => requestAnimationFrame(r));
+        ev("pointermove", b.x + b.width * (0.02 + 0.72 * k / 8), document);
+      }
+    });
+    // L'aperçu suit le doigt…
+    await expect(barre).toHaveAttribute("aria-valuenow", "75", { timeout: 2_000 });
+    await page.evaluate(() => document.dispatchEvent(new PointerEvent("pointercancel",
+      { bubbles: true, pointerId: 7, isPrimary: true, pointerType: "touch" })));
+    // …et s'efface avec le geste : rien n'est enregistré.
+    await expect(barre).toHaveAttribute("aria-valuenow", "0", { timeout: 2_000 });
+    expect(await etatsMissions(missionsDe(c))).toEqual(["false", "false", "false", "false"]);
+    await relire(page);
+    await expect(barre).toHaveAttribute("aria-valuenow", "0");
+  });
 });
 
 test("C5 — un simple appui sur la barre bascule l'étape entre 0 et 100 %", async ({ page }) => {

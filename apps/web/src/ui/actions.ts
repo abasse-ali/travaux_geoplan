@@ -279,14 +279,22 @@ export function creerActions({ synchro, enHaut }: Branchements): Actions {
         setLocal?.(null);
         stop();
       };
+      /* Un geste interrompu par le système (appel, notification, un
+         défilement que le navigateur reprend) ne règle rien, et la barre
+         revient à ce qui est enregistré : elle gardait l'aperçu du glisser
+         (constat U23). */
+      const annuler = () => {
+        setLocal?.(null);
+        stop();
+      };
       const stop = () => {
         document.removeEventListener("pointermove", move);
         document.removeEventListener("pointerup", up);
-        document.removeEventListener("pointercancel", stop);
+        document.removeEventListener("pointercancel", annuler);
       };
       document.addEventListener("pointermove", move, { passive: false });
       document.addEventListener("pointerup", up);
-      document.addEventListener("pointercancel", stop);
+      document.addEventListener("pointercancel", annuler);
     },
 
     note: (sid, v) => geste({ type: "modifierChantier", site: sid, champs: { note: v } }),
