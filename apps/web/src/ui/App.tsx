@@ -314,9 +314,15 @@ export default function App(){
      l'on vient. Une référence suffit — elle n'a pas à provoquer de rendu,
      elle est lue au moment de l'animation. */
   const sensSem = useRef(1);
-  /* Le premier écran s'affiche sans fondu ; les onglets suivants, en fondu. */
+  /* Le premier écran s'affiche sans fondu ; les onglets suivants, en fondu.
+     Le premier écran est le premier qui montre quelque chose : sans rien
+     sur l'appareil (première connexion, sources api et supabase), la coque
+     dessine d'abord l'attente, et le libellé de la semaine et « Auj. »
+     naissent au rendu suivant — ils entraient alors en glissant sans que
+     rien n'arrive (constat V6, test K6). */
   const premierRendu = useRef(true);
-  useEffect(() => { premierRendu.current = false; }, []);
+  const affiche = vue != null;
+  useEffect(() => { if (affiche) premierRendu.current = false; }, [affiche]);
   /* Le fondu d'un onglet se décide quand l'onglet change, pas à chaque
      rendu : relu à chaque rendu, il se rejouait sur l'écran déjà là au
      deuxième rendu de la coque (test K6). */
