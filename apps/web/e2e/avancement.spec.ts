@@ -80,6 +80,28 @@ test("C2 — le titre d'une étape déplie ses missions, une seule étape à la 
   await expect(missionsDe(c)).toHaveCount(0);
 });
 
+test("C1 — un volet qui s'ouvre ne défile pas sur lui-même quand le focus y entre", async ({ page }) => {
+  /* Constat U26 : rogné par overflow: hidden, le volet était une zone de
+     défilement. Un élément qu'on y faisait paraître pendant qu'il s'ouvre
+     (le focus au clavier ou d'un lecteur d'écran, scrollIntoView) le
+     faisait défiler sur lui-même ; puis le contenu redescendait image après
+     image à mesure qu'il grandissait. Sous le doigt de Playwright, qui fait
+     paraître ce qu'il touche : le titre visé descendait entre l'appui et le
+     relâché, et le toucher ne dépliait rien (C5, C6, contre l'API, deux à
+     trois fois sur quarante). */
+  await openLocal(page, replie);
+  const acc = carte(page, S9).getByRole("button", { name: /^Les 12 étapes/ });
+  const defile = await acc.evaluate(async el => {
+    (el as HTMLElement).click();
+    await new Promise(r => requestAnimationFrame(r));
+    const volet = document.getElementById(el.getAttribute("aria-controls")!)!;
+    const titres = volet.querySelectorAll<HTMLElement>("[data-etape-nom]");
+    titres[titres.length - 1]!.closest("button")!.focus();
+    return volet.scrollTop;
+  });
+  expect(defile).toBe(0);
+});
+
 test.describe("C3 — cocher les missions", () => {
   test("C3 — cocher trois missions sur quatre met la barre à 75 %, décocher la fait reculer", async ({ page }) => {
     await openLocal(page, replie);

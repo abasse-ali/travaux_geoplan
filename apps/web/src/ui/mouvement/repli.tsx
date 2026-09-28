@@ -21,6 +21,14 @@ import { mouvementReduit } from "./reduit";
 const DUREE = 260;
 const COURBE = "cubic-bezier(.22,.9,.3,1)";
 
+/* Rogné, mais pas défilable. Avec overflow: hidden, le volet est une
+   zone de défilement : un élément qu'on y fait paraître pendant qu'il
+   s'ouvre (le focus, scrollIntoView) le fait défiler sur lui-même, puis
+   le contenu redescend image après image à mesure qu'il grandit — sous
+   le doigt (constat U26). overflow: clip rogne pareil, sans défilement ;
+   Safari le connaît depuis la version 16, hidden reste pour les autres. */
+const ROGNE = typeof CSS !== "undefined" && CSS.supports?.("overflow", "clip") ? "clip" : "hidden";
+
 export function Repli({ ouvert, children, style, ...attributs }: {
   ouvert: boolean;
   children?: ReactNode;
@@ -57,7 +65,7 @@ export function Repli({ ouvert, children, style, ...attributs }: {
 
   if (!monte) return null;
   return (
-    <div ref={el} style={{ ...style, overflow: "hidden" }} {...attributs}>
+    <div ref={el} style={{ ...style, overflow: ROGNE }} {...attributs}>
       {ouvert ? children : montre.current}
     </div>
   );
