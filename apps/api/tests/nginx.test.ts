@@ -12,7 +12,7 @@ const principale = lire("nginx.conf");
 
 /* Les emplacements qui passent à l'API, avec leur contenu. */
 const versLApi = [...conf.matchAll(/location\s+([^{\s]+)\s*\{([^}]*)\}/g)]
-  .filter(m => /proxy_pass\s+http:\/\/api:/.test(m[2]!))
+  .filter(m => /proxy_pass\s+(\$api|http:\/\/api:)/.test(m[2]!))
   .map(m => ({ chemin: m[1]!, corps: m[2]! }));
 
 const secondes = (v: string): number => {
@@ -44,5 +44,15 @@ describe("nginx devant l'API", () => {
     expect(principale).toMatch(/\bgzip\s+on;/);
     const types = /gzip_types\s+([^;]+);/.exec(principale)?.[1].split(/\s+/) ?? [];
     expect(types).toEqual(expect.arrayContaining(["text/css", "application/javascript"]));
+  });
+
+  /* Suite de P8 (relecture de la recette, W8) : écrite en dur dans
+     proxy_pass, l'adresse de l'API était résolue une fois, au démarrage
+     de nginx. L'API recréée à une autre adresse, tout partait vers
+     l'ancienne (502) jusqu'au redémarrage de nginx. */
+  it("relit l'adresse de l'API au DNS de Docker, au lieu de la garder", () => {
+    expect(conf).toMatch(/resolver\s+127\.0\.0\.11\b[^;]*valid=\d+s/);
+    expect(conf).toMatch(/set\s+\$api\s+http:\/\/api:3000;/);
+    for (const e of versLApi) expect(e.corps, e.chemin).toMatch(/proxy_pass\s+\$api;/);
   });
 });
